@@ -82,7 +82,7 @@ class LoginController extends Controller
 
 
         $user = User::with('permission')
-            ->with('position')
+            ->with('user_ref')
             ->where('email', $request->email)
             ->where('password', md5($request->password))
             ->where('status', 1)
