@@ -28,9 +28,10 @@ class Menu extends Model
 
     //////////////////////////////////////// relation //////////////////////////////////////
 
-    public function permission()
+    public function permissions()
     {
-        return $this->belongsTo(Permission::class);
+        return $this->belongsToMany(Permission::class);
     }
+
 
 }

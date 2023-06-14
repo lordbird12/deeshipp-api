@@ -11,34 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class PermissionController extends Controller
 {
-   
-
-    public function getPermissonMenu(Request $request)
-    {
-
-        $permissionId = $request->permission_id;
-
-        $permission = Permission::find($permissionId);
-
-      
-
-        $menu = Menu::where('permission_id', $permissionId)->get();
-
-        $data = [];
-
-        //permision name
-        $data['permission_name'] = $permission->name;
-
-        //manu
-        for ($i = 0; $i < count($menu); $i++) {
-            $data['menu'][$i]['name'] = $menu[$i]->name;
-
-        }
-
-        return $this->returnSuccess('Successful', $data);
-
-    }
-
 
 
     public function getPermission()
@@ -56,35 +28,6 @@ class PermissionController extends Controller
         return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $Permission);
     }
 
-    public function getPermissonUser()
-    {
-
-        //$LoginID = $request->login_id;
-
-        // $user = DB::table('permission')
-        //     ->join('users','users.id',"=",'permission.id')
-        //     ->get();
-
-            return DB::table('permission')
-            ->join('users','users.id',"=",'permission.id',)
-            //->where('users.id','2')
-            ->get();
-
-
-        // $data = [];
-
-        // for ($i = 0; $i < count($user); $i++) {
-        //     $data[] = $user[$i]->name;
-
-        // }
-
-        // return $this->returnSuccess('Successful', $data);
-
-    }
-
-
-
-
 
     public function PermissionPage(Request $request)
     {
@@ -96,13 +39,17 @@ class PermissionController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
-        $col = array('id', 'name', 'menu1', 'menu2', 'menu3', 'menu4', 'menu5', 'menu6', 'menu7', 'menu8'
-            , 'create_by', 'update_by', 'created_at', 'updated_at');
+        $status = $request->status;
 
-            $orderby = array('', 'name', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $col = array('id', 'name', 'create_by', 'update_by', 'created_at', 'updated_at');
 
+        $orderby = array('', 'name', 'create_by', 'update_by', 'created_at', 'updated_at');
 
         $d = Permission::select($col);
+
+        if (isset($status)) {
+            $d->where('status', $status);
+        }
 
         if ($orderby[$order[0]['column']]) {
             $d->orderby($orderby[$order[0]['column']], $order[0]['dir']);
@@ -136,7 +83,6 @@ class PermissionController extends Controller
 
         return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $d);
     }
-
     /**
      * Show the form for creating a new resource.
      *
@@ -165,6 +111,7 @@ class PermissionController extends Controller
         }
 
         $name = $request->name;
+        $menuID = $request->menu;
 
         $checkName = Permission::where('name', $name)->first();
 
@@ -179,19 +126,20 @@ class PermissionController extends Controller
 
                 $permission = new Permission();
                 $permission->name = $name;
-                $permission->menu1 = $request->menu1;
-                $permission->menu2 = $request->menu2;
-                $permission->menu3 = $request->menu3;
-                $permission->menu4 = $request->menu4;
-                $permission->menu5 = $request->menu5;
-                $permission->menu6 = $request->menu6;
-                $permission->menu7 = $request->menu7;
-                $permission->menu8 = $request->menu8;
 
                 $permission->create_by = $loginBy->user_id;
                 $permission->updated_at = Carbon::now()->toDateTimeString();
 
                 $permission->save();
+
+                //add
+                for ($i = 0; $i < count($menuID); $i++) {
+
+                    $menu = Menu::find($menuID[$i]['menu_id']);
+                    $permission->menus()->attach($menu, array('view' => $menuID[$i]['view'], 'save' => $menuID[$i]['save'], 'edit' => $menuID[$i]['edit'], 'delete' => $menuID[$i]['delete']));
+
+                }
+
 
                 //log
                 $userId = $loginBy->user_id;
@@ -245,6 +193,9 @@ class PermissionController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        $menuID = $request->menu;
+
         $loginBy = $request->login_by;
 
         if (!isset($id)) {
@@ -262,19 +213,31 @@ class PermissionController extends Controller
         try {
 
             $permission = Permission::find($id);
-            $permission->menu1 = $request->menu1;
-            $permission->menu2 = $request->menu2;
-            $permission->menu3 = $request->menu3;
-            $permission->menu4 = $request->menu4;
-            $permission->menu5 = $request->menu5;
-            $permission->menu6 = $request->menu6;
-            $permission->menu7 = $request->menu7;
-            $permission->menu8 = $request->menu8;
 
             $permission->update_by = $loginBy->user_id;
             $permission->updated_at = Carbon::now()->toDateTimeString();
-
             $permission->save();
+
+            //get manu
+            $permission_Menu = DB::table('menu_permission')
+                ->where('permission_id', $permission->id)
+                ->get();
+
+            $MenuID = [];
+            for ($i = 0; $i < count($permission_Menu); $i++) {
+                $MenuID[$i] = $permission_Menu[$i]->menu_id;
+            }
+
+            //remove m to m
+            $menu = Menu::find($MenuID);
+            $permission->menus()->detach($MenuID);
+
+            //add m to m
+            for ($i = 0; $i < count($menuID); $i++) {
+                $menu = Menu::find($menuID[$i]['menu_id']);
+                $permission->menus()->attach($menu, array('view' => $menuID[$i]['view'], 'save' => $menuID[$i]['save'], 'edit' => $menuID[$i]['edit'], 'delete' => $menuID[$i]['delete']));
+
+            }
 
             //log
             $userId = $loginBy->user_id;
@@ -291,7 +254,7 @@ class PermissionController extends Controller
 
             DB::rollback();
 
-            return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ' , 404);
+            return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ', 404);
         }
     }
 
@@ -317,7 +280,7 @@ class PermissionController extends Controller
             DB::beginTransaction();
 
             try {
-              
+
                 $Permission = Permission::find($id);
 
                 $Permission->name =  $Permission->name. '_del_'.date('YmdHis');
@@ -329,7 +292,7 @@ class PermissionController extends Controller
                 $description = 'ผู้ใช้งาน ' . $userId . ' ได้ทำการ ' . $type . ' ' . $Permission->name;
                 $this->Log($userId, $description, $type);
                 //
-               
+
                 $Permission->delete();
 
                 DB::commit();
@@ -347,5 +310,76 @@ class PermissionController extends Controller
 
             return $this->returnErrorData('กรุณาย้ายเจ้าหน้าที่ออกจากกลุ่มสิทธิ์การใช้งานก่อนดำเนินการ', 404);
         }
+    }
+
+    public function getPermissonUser(Request $request)
+    {
+        $loginBy = $request->login_by;
+
+        if (!isset($loginBy)) {
+            return $this->returnErrorData('ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่อีกครั้ง', 404);
+        }
+
+        $permission_Menu = DB::table('menu_permission')
+            ->select('menu_permission.id', 'menu_permission.permission_id', 'menu_permission.menu_id', 'menu_permission.view'
+                , 'menu_permission.save', 'menu_permission.edit', 'menu_permission.delete', 'm.name')
+            ->leftJoin('permission as p', 'p.id', 'menu_permission.permission_id')
+            ->leftJoin('menu as m', 'm.id', 'menu_permission.menu_id')
+            ->where('permission_id', $loginBy->permission_id)
+            ->get();
+
+        if (!empty($permission_Menu)) {
+            return response()->json([
+                'code' => '200',
+                'status' => '1',
+                'massage' => 'เรียกดูข้อมูลสำเร็จ',
+                'data' => $permission_Menu,
+            ], 200);
+        } else {
+            return response()->json([
+                'code' => '400',
+                'status' => '0',
+                'massage' => 'เรียกดูข้อมูลล้มเหลว',
+                'data' => '',
+            ], 200);
+        }
+
+    }
+
+    public function getPermissonMenu(Request $request)
+    {
+
+        $permission_id = $request->permission_id;
+
+        $loginBy = $request->login_by;
+
+        if (!isset($loginBy)) {
+            return $this->returnErrorData('ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่อีกครั้ง', 404);
+        }
+
+        $permission_Menu = DB::table('menu_permission')
+            ->select('menu_permission.id', 'menu_permission.permission_id', 'menu_permission.menu_id', 'menu_permission.view'
+                , 'menu_permission.save', 'menu_permission.edit', 'menu_permission.delete', 'm.name')
+            ->leftJoin('permission as p', 'p.id', 'menu_permission.permission_id')
+            ->leftJoin('menu as m', 'm.id', 'menu_permission.menu_id')
+            ->where('permission_id', $permission_id)
+            ->get();
+
+        if (!empty($permission_Menu)) {
+            return response()->json([
+                'code' => '200',
+                'status' => '1',
+                'massage' => 'เรียกดูข้อมูลสำเร็จ',
+                'data' => $permission_Menu,
+            ], 200);
+        } else {
+            return response()->json([
+                'code' => '400',
+                'status' => '0',
+                'massage' => 'เรียกดูข้อมูลล้มเหลว',
+                'data' => '',
+            ], 200);
+        }
+
     }
 }

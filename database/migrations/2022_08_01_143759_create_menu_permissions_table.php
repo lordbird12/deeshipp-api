@@ -21,6 +21,11 @@ class CreateMenuPermissionsTable extends Migration
             $table->integer('menu_id')->unsigned()->index();
             $table->foreign('menu_id')->references('id')->on('menu')->onDelete('cascade');
 
+            $table->boolean('view')->default(1);
+            $table->boolean('save')->default(1);
+            $table->boolean('edit')->default(1);
+            $table->boolean('delete')->default(1);
+
             $table->string('create_by', 100)->charset('utf8')->nullable();
             $table->string('update_by', 100)->charset('utf8')->nullable();
             $table->timestamps();

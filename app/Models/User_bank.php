@@ -7,15 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Menu_permission extends Model
+class User_bank extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
-    protected $table = 'menu_permission';
+    protected $table = 'user_bank';
     protected $softDelete = true;
-
-    protected $hidden = ['deleted_at'];
 
     //////////////////////////////////////// format //////////////////////////////////////
 
@@ -26,14 +24,13 @@ class Menu_permission extends Model
 
     //////////////////////////////////////// relation //////////////////////////////////////
 
-
-    public function menu()
+    public function user()
     {
-        return $this->belongsTo(Menu::class);
+        return $this->belongsTo(User::class);
     }
 
-    public function permission()
+    public function bank()
     {
-        return $this->belongsTo(Permission::class);
+        return $this->belongsTo(Bank::class);
     }
 }

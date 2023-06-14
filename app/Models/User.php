@@ -42,42 +42,26 @@ class User extends Model
     {
         return $this->belongsTo(Permission::class);
     }
-    public function department()
+
+    public  function user_create()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(User::class, 'create_by', 'user_id');
     }
 
-    public function branch()
+    public  function user_ref()
     {
-        return $this->belongsTo(Branch::class);
+        return $this->belongsTo(User::class, 'user_ref_id', 'id');
     }
-    
-    public  function user_create ()
+
+    public function user_pages()
     {
-        return $this->belongsTo(User::class,'create_by','user_id');
+        return $this->hasMany(User_page::class);
     }
-  
-    // public function affiliation()
-    // {
-    //     return $this->belongsTo(Affiliation::class, 'affiliation_id', 'affiliation_id');
-    // }
 
-
-    //prefix
-    public function position()
+    public function user_banks()
     {
-        //return $this->belongsTo(Position::class, 'position_id', 'position_id');
-        //return $this->hasOne(Position::class,'id','id');
-        return $this->belongsTo(Position::class,);
+        return $this->hasMany(User_bank::class);
     }
-//     public function prefix_type()
-//     {
-//         return $this->belongsTo(PrefixType::class, 'prefix_type_id', 'prefix_type_id');
-//     }
 
-//     public function prefix()
-//     {
-//         return $this->belongsTo(Prefix::class, 'prefix_id', 'prefix_id');
-//     }
 
- }
+}

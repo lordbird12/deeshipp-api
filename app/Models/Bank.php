@@ -30,4 +30,9 @@ class Bank extends Model
     {
         return $this->belongsTo(User::class,'create_by','user_id');
     }
+
+    public function user_banks()
+    {
+        return $this->hasMany(User_bank::class);
+    }
 }

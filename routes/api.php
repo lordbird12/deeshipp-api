@@ -47,6 +47,8 @@ use App\Http\Controllers\WorkingTimeController;
 use App\Http\Controllers\WorkTelesaleController;
 use App\Http\Controllers\WorkTimeController;
 use App\Http\Controllers\ProductLiveController;
+use App\Http\Controllers\UserBankController;
+use App\Http\Controllers\UserPageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -395,6 +397,16 @@ Route::group(['middleware' => 'checkjwt'], function () {
     //log
     Route::post('/log_page', [LogController::class, 'LogPage']);
     Route::get('/get_log_type', [LogController::class, 'getLogType']);
+
+     //user bank
+     Route::resource('user_bank', UserBankController::class);
+     Route::post('/get_user_bank', [UserBankController::class, 'getUserBank']);
+     Route::post('/user_bank_page', [UserBankController::class, 'UserBankPage']);
+
+       //user page
+       Route::resource('user_page', UserPageController::class);
+       Route::post('/get_user_page', [UserPageController::class, 'getUserPage']);
+       Route::post('/user_page_page', [UserPageController::class, 'UserPagePage']);
 });
 
 Route::post('/line_bot', [SaleOrderController::class, 'lineBot']);

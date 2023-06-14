@@ -17,10 +17,12 @@ class UserController extends Controller
     public function getUser()
     {
 
-        // $User = User::get()->toarray();
+        $User = User::with('permission')
+            ->with('user_ref')
+            ->with('user_create')
+            ->get();
 
-        $User = User::with('Position')->get()->toarray();
-        if (!empty($User)) {
+        if ($User->isNotEmpty()) {
 
             for ($i = 0; $i < count($User); $i++) {
                 $User[$i]['No'] = $i + 1;
@@ -40,56 +42,29 @@ class UserController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
-        $type = $request->login_by->type;
-        $agencyCommandId = $request->login_by->agency_command_id;
-        $subAgencyCommandId = $request->login_by->sub_agency_command_id;
-        $affiliationId = $request->login_by->affiliation_id;
+        $user_ref_id = $request->user_ref_id;
 
         $Status = $request->status;
 
         $col = array(
-            'id', 'permission_id', 'agency_command_id', 'sub_agency_command_id', 'affiliation_id', 'position_id', 'prefix_type_id', 'prefix_id', 'user_id', 'name', 'email', 'image', 'status', 'type', 'create_by', 'update_by', 'created_at', 'updated_at'
+            'id', 'permission_id', 'user_ref_id', 'user_id', 'password', 'first_name', 'last_name', 'email', 'image', 'tel', 'tel2', 'shop_name', 'shop_address', 'create_by', 'update_by', 'created_at', 'updated_at'
         );
 
-        $orderby = array('', 'image', 'name', 'user_id', 'permission_id', 'create_by', 'status');
+        $orderby = array('', 'permission_id', 'user_ref_id', 'user_id', 'password', 'first_name', 'last_name', 'email', 'image', 'tel', 'tel2', 'shop_name', 'shop_address', 'create_by', 'update_by', 'created_at', 'updated_at');
 
         $D = User::select($col)
             ->with('permission')
-            ->with('agency_command')
-            ->with('sub_agency_command')
-            ->with('affiliation')
-            ->with('position')
-            ->with('prefix_type')
-            ->with('prefix');
+            ->with('user_ref')
+            ->with('user_create');
+
+        if ($user_ref_id) {
+            $D->where('user_ref_id', $user_ref_id);
+        }
 
         if ($Status) {
             $D->where('status', $Status);
         }
 
-        if ($type == 'agency_command') {
-
-            if ($agencyCommandId) {
-                $D->where('agency_command_id', $agencyCommandId);
-            }
-        }
-
-        //
-        if ($type == 'sub_agency_command') {
-
-            if ($agencyCommandId && $subAgencyCommandId) {
-                $D->where('agency_command_id', $agencyCommandId);
-                $D->where('sub_agency_command_id', $subAgencyCommandId);
-            }
-        }
-
-        if ($type == 'affiliation') {
-
-            if ($agencyCommandId && $subAgencyCommandId && $affiliationId) {
-                $D->where('agency_command_id', $agencyCommandId);
-                $D->where('sub_agency_command_id', $subAgencyCommandId);
-                $D->where('affiliation_id', $affiliationId);
-            }
-        }
         //
 
         if ($orderby[$order[0]['column']]) {
@@ -109,30 +84,6 @@ class UserController extends Controller
 
                 //permission
                 $query = $this->withPermission($query, $search);
-                //
-
-                //agency_command
-                $query = $this->withAgencyCommand($query, $search);
-                //
-
-                //sub agency_command
-                $query = $this->withSubAgencyCommand($query, $search);
-                //
-
-                //Affiliation
-                $query = $this->withAffiliation($query, $search);
-                //
-
-                //Position
-                $query = $this->withPosition($query, $search);
-                //
-
-                //Prefix type
-                $query = $this->withPrefixType($query, $search);
-                //
-
-                //Prefix
-                $query = $this->withPrefix($query, $search);
                 //
 
             });
@@ -175,7 +126,9 @@ class UserController extends Controller
     {
         $loginBy = $request->login_by;
 
-        if (!isset($request->user_id)) {
+        if (!isset($request->permission_id)) {
+            return $this->returnErrorData('กรุณาเลือกสิทธิ์การใช้งาน', 404);
+        } else if (!isset($request->user_id)) {
             return $this->returnErrorData('กรุณากรอกรหัสพนักงาน', 404);
         } else if (!isset($request->first_name)) {
             return $this->returnErrorData('กรุณาใส่ชื่อ', 404);
@@ -185,16 +138,7 @@ class UserController extends Controller
             return $this->returnErrorData('กรุณากรอกอีเมล์', 404);
         } else if (!isset($request->password)) {
             return $this->returnErrorData('กรุณากรอกรหัสผ่าน', 404);
-        } else if (!isset($request->image)) {
-            return $this->returnErrorData('กรุณาเพิ่มรูป', 404);
-        } else if (!isset($request->image_signature)) {
-            return $this->returnErrorData('กรุณาเพิ่มรูปลายเซ็น', 404);
-        } else if (!isset($request->position_id)) {
-            return $this->returnErrorData('กรุณาระบุตำแหน่ง', 404);
-        } else if (!isset($request->branch_id)) {
-            return $this->returnErrorData('กรุณาระบุสาขา', 404);
         }
-
         $checkName = User::where(function ($query) use ($request) {
 
             $query->orwhere('email', $request->email)
@@ -212,23 +156,25 @@ class UserController extends Controller
 
                 //
                 $User = new User();
+                $User->permission_id = $request->permission_id;
+                $User->user_ref_id = $request->user_ref_id;
+
                 $User->user_id = $request->user_id;
 
                 $User->password = md5($request->password);
                 $User->first_name = $request->first_name;
                 $User->last_name = $request->last_name;
                 $User->email = $request->email;
-                $User->permission_id = $request->permission_id;
-                $User->department_id = $request->department_id;
-                $User->position_id = $request->position_id;
-                $User->branch_id = $request->branch_id;
+
                 if ($request->image && $request->image != null && $request->image != 'null') {
                     $User->image = $this->uploadImage($request->image, '/images/users/');
                 }
-                if ($request->image_signature && $request->image_signature != 'null' && $request->image_signature != null) {
-                    $User->image_signature = $this->uploadImage($request->image_signature, '/images/users_signature/');
-                }
-                $User->salary = $request->salary;
+
+                $User->tel = $request->tel;
+                $User->tel2 = $request->tel2;
+                $User->shop_name = $request->shop_name;
+                $User->shop_address = $request->shop_address;
+
                 $User->status = 1;
                 $User->create_by = $loginBy->user_id;
 
@@ -236,8 +182,8 @@ class UserController extends Controller
 
 
                 //log
-                $userId = "admin";
-                $type = 'เพิ่ม admin';
+                $userId = $loginBy->user_id;
+                $type = 'เพิ่มผู้ใช้งาน';
                 $description = 'เจ้าหน้าที่ ' . $userId . ' ได้ทำการ ' . $type . ' ' . $request->user_id;
                 $this->Log($userId, $description, $type);
                 //
@@ -263,8 +209,9 @@ class UserController extends Controller
     public function show($id)
     {
 
-        $User = User::with('branch')
-            ->with('position')
+        $User = User::with('permission')
+            ->with('user_ref')
+            ->with('user_create')
             ->where('id', $id)
             ->first();
 
@@ -298,12 +245,8 @@ class UserController extends Controller
     {
 
         $User = User::with('permission')
-            ->with('department')
-            ->with('position')
-            ->with('branch')
-            // ->with('position')
-            // ->with('prefix_type')
-            // ->with('prefix')
+            ->with('user_ref')
+            ->with('user_create')
             ->where('id', $request->login_id)
             ->first();
 
@@ -339,18 +282,18 @@ class UserController extends Controller
 
 
             $User->first_name = $request->first_name;
-
             $User->last_name = $request->last_name;
-
-            $User->email = $request->email;
-
 
             if ($request->image && $request->image != null && $request->image != 'null') {
                 $User->image = $this->uploadImage($request->image, '/images/users/');
             }
-            if ($request->image_signature && $request->image_signature != 'null' && $request->image_signature != null) {
-                $User->image_signature = $this->uploadImage($request->image_signature, '/images/users_signature/');
-            }
+
+            $User->tel = $request->tel;
+            $User->tel2 = $request->tel2;
+            $User->shop_name = $request->shop_name;
+            $User->shop_address = $request->shop_address;
+
+
             $User->update_by = $loginBy->user_id;
             $User->updated_at = Carbon::now()->toDateTimeString();
 
@@ -383,24 +326,14 @@ class UserController extends Controller
 
         if (!isset($request->id)) {
             return $this->returnErrorData('ไม่พบข้อมูล id', 404);
-        } else if (!isset($request->user_id)) {
-            return $this->returnErrorData('กรุณากรอกรหัสพนักงาน', 404);
         } else if (!isset($request->first_name)) {
             return $this->returnErrorData('กรุณาใส่ชื่อ', 404);
         } else if (!isset($request->last_name)) {
             return $this->returnErrorData('กรุณากรอกนามสกุล', 404);
         } else if (!isset($request->email)) {
             return $this->returnErrorData('กรุณากรอกอีเมล์', 404);
-        } else if (!isset($request->password)) {
-            return $this->returnErrorData('กรุณากรอกรหัสผ่าน', 404);
         } else if (!isset($request->image)) {
             return $this->returnErrorData('กรุณาเพิ่มรูป', 404);
-        } else if (!isset($request->image_signature)) {
-            return $this->returnErrorData('กรุณาเพิ่มรูปลายเซ็น', 404);
-        } else if (!isset($request->position_id)) {
-            return $this->returnErrorData('กรุณาระบุตำแหน่ง', 404);
-        } else if (!isset($request->branch_id)) {
-            return $this->returnErrorData('กรุณาระบุสาขา', 404);
         } else {
 
             DB::beginTransaction();
@@ -416,15 +349,16 @@ class UserController extends Controller
                 $User->first_name = $request->first_name;
                 $User->last_name = $request->last_name;
                 $User->email = $request->email;
-                $User->position_id = $request->position_id;
-                $User->branch_id = $request->branch_id;
+
                 if ($request->image && $request->image != null && $request->image != 'null') {
                     $User->image = $this->uploadImage($request->image, '/images/users/');
                 }
-                if ($request->image_signature && $request->image_signature != 'null' && $request->image_signature != null) {
-                    $User->image_signature = $this->uploadImage($request->image_signature, '/images/users_signature/');
-                }
-                $User->salary = $request->salary;
+
+                $User->tel = $request->tel;
+                $User->tel2 = $request->tel2;
+                $User->shop_name = $request->shop_name;
+                $User->shop_address = $request->shop_address;
+
                 $User->status = 1;
                 $User->create_by = $loginBy->user_id;
 
@@ -432,7 +366,7 @@ class UserController extends Controller
 
 
                 //log
-                $userId = "admin";
+                $userId = $loginBy->user_id;
                 $type = 'เพิ่ม admin';
                 $description = 'เจ้าหน้าที่ ' . $userId . ' ได้ทำการ ' . $type . ' ' . $request->user_id;
                 $this->Log($userId, $description, $type);
@@ -598,15 +532,6 @@ class UserController extends Controller
             return $this->returnErrorData('กรุณากรอกรหัสผ่าน', 404);
         } else if (!isset($request->image)) {
             return $this->returnErrorData('กรุณาเพิ่มรูป', 404);
-        } else if (!isset($request->image_signature)) {
-            return $this->returnErrorData('กรุณาเพิ่มรูปลายเซ็น', 404);
-        } else if (!isset($request->department_id)) {
-
-            return $this->returnErrorData('กรุณาระบุแผนก', 404);
-        } else if (!isset($request->position_id)) {
-            return $this->returnErrorData('กรุณาระบุตำแหน่ง', 404);
-        } else if (!isset($request->branch_id)) {
-            return $this->returnErrorData('กรุณาระบุสาขา', 404);
         } else if (!isset($request->permission_id)) {
             return $this->returnErrorData('กรุณาระบุสิทธิ์ผู้ใช้งาน', 404);
         }
@@ -635,11 +560,9 @@ class UserController extends Controller
                 $User->last_name = $request->last_name;
                 $User->email = $request->email;
                 $User->permission_id = $request->permission_id;
-                $User->department_id = $request->department_id;
-                $User->position_id = $request->position_id;
-                $User->branch_id = $request->branch_id;
+
                 $User->image = $this->uploadImage($request->image, '/images/users/');
-                $User->image_signature = $this->uploadImage($request->image_signature, '/images/users_signature/');
+
                 $User->status = 1;
                 $User->create_by = "admin";
 
@@ -723,83 +646,83 @@ class UserController extends Controller
     public function ActivateUserPage(Request $request)
     {
 
-        $columns = $request->columns;
-        $length = $request->length;
-        $order = $request->order;
-        $search = $request->search;
-        $start = $request->start;
-        $page = $start / $length + 1;
+        // $columns = $request->columns;
+        // $length = $request->length;
+        // $order = $request->order;
+        // $search = $request->search;
+        // $start = $request->start;
+        // $page = $start / $length + 1;
 
-        $col = array(
+        // $col = array(
 
-            'id',
-            'branch_id',
-            'position_id',
-            'user_id',
-            'password',
-            'first_name',
-            'last_name',
-            'email',
-            'image',
-            'image_signature',
-            'status',
-            'create_by',
-            'update_by',
-            'created_at',
-            'updated_at',
-            'deleted_at',
+        //     'id',
+        //     'branch_id',
+        //     'position_id',
+        //     'user_id',
+        //     'password',
+        //     'first_name',
+        //     'last_name',
+        //     'email',
+        //     'image',
+        //     'image_signature',
+        //     'status',
+        //     'create_by',
+        //     'update_by',
+        //     'created_at',
+        //     'updated_at',
+        //     'deleted_at',
 
-        );
+        // );
 
-        $d = User::select($col)
+        // $d = User::select($col)
 
-            ->with('branch')
-            ->with('position')
-            // ->where('status', 'Request')
+        //     ->with('branch')
+        //     ->with('position')
+        //     // ->where('status', 'Request')
 
-            ->orderby($col[$order[0]['column']], $order[0]['dir']);
+        //     ->orderby($col[$order[0]['column']], $order[0]['dir']);
 
 
 
-        if ($search['value'] != '' && $search['value'] != null) {
+        // if ($search['value'] != '' && $search['value'] != null) {
 
-            //search datatable
-            $d->where(function ($query) use ($search, $col) {
-                foreach ($col as &$c) {
-                    $query->orWhere($c, 'like', '%' . $search['value'] . '%');
-                }
-            });
-        }
+        //     //search datatable
+        //     $d->where(function ($query) use ($search, $col) {
+        //         foreach ($col as &$c) {
+        //             $query->orWhere($c, 'like', '%' . $search['value'] . '%');
+        //         }
+        //     });
+        // }
 
-        $d = $d->paginate($length, ['*'], 'page', $page);
+        // $d = $d->paginate($length, ['*'], 'page', $page);
 
-        if ($d->isNotEmpty()) {
+        // if ($d->isNotEmpty()) {
 
-            //run no
-            $No = (($page - 1) * $length);
+        //     //run no
+        //     $No = (($page - 1) * $length);
 
-            for ($i = 0; $i < count($d); $i++) {
+        //     for ($i = 0; $i < count($d); $i++) {
 
-                $No = $No + 1;
-                $d[$i]->No = $No;
+        //         $No = $No + 1;
+        //         $d[$i]->No = $No;
 
-                //image
-                if ($d[$i]->image) {
-                    $d[$i]->image = url($d[$i]->image);
-                } else {
-                    $d[$i]->image = null;
-                }
+        //         //image
+        //         if ($d[$i]->image) {
+        //             $d[$i]->image = url($d[$i]->image);
+        //         } else {
+        //             $d[$i]->image = null;
+        //         }
 
-                //signature
-                if ($d[$i]->signature) {
-                    $d[$i]->signature = url($d[$i]->signature);
-                } else {
-                    $d[$i]->signature = null;
-                }
-            }
-        }
+        //         //signature
+        //         if ($d[$i]->signature) {
+        //             $d[$i]->signature = url($d[$i]->signature);
+        //         } else {
+        //             $d[$i]->signature = null;
+        //         }
+        //     }
+        // }
 
-        return $this->returnSuccess('Successful', $d);
+        // return $this->returnSuccess('Successful', $d);
     }
 
     public function ForgotPasswordUser(Request $request)
@@ -949,9 +872,11 @@ class UserController extends Controller
 
         $round = $year . "-" . $month;
 
-        $col = array('id', 'user_id', 'first_name', 'last_name', 'email', 'salary', 'image', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $col = array(
+            'id', 'permission_id', 'user_ref_id', 'user_id', 'password', 'first_name', 'last_name', 'email', 'image', 'tel', 'tel2', 'shop_name', 'shop_address', 'create_by', 'update_by', 'created_at', 'updated_at'
+        );
 
-        $orderby = array('', 'user_id', 'first_name', 'last_name', 'email', 'salary', 'image', 'create_by');
+        $orderby = array('', 'permission_id', 'user_ref_id', 'user_id', 'password', 'first_name', 'last_name', 'email', 'image', 'tel', 'tel2', 'shop_name', 'shop_address', 'create_by', 'update_by', 'created_at', 'updated_at');
 
         $D = User::select($col);
 

@@ -12,7 +12,7 @@ class MenuController extends Controller
 
     public function index()
     {
-        $Menu = Menu::with('permission')->get();
+        $Menu = Menu::get();
 
         if ($Menu->isNotEmpty()) {
 

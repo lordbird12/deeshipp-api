@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePermissionTable extends Migration
+class CreateUserPagesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,17 @@ class CreatePermissionTable extends Migration
      */
     public function up()
     {
-        Schema::create('permission', function (Blueprint $table) {
+        Schema::create('user_page', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 255)->charset('utf8');
-            $table->boolean('status')->default(1);
+
+            $table->integer('user_id')->unsigned()->index();
+            $table->foreign('user_id')->references('id')->on('user')->onDelete('cascade');
+
+            $table->string('page_id')->charset('utf8')->nullable();
+            $table->string('name')->charset('utf8')->nullable();
+            $table->text('token')->charset('utf8')->nullable();
+            $table->text('image')->charset('utf8')->nullable();
+
             $table->string('create_by', 100)->charset('utf8')->nullable();
             $table->string('update_by', 100)->charset('utf8')->nullable();
             $table->timestamps();
@@ -31,6 +38,6 @@ class CreatePermissionTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('permission');
+        Schema::dropIfExists('user_page');
     }
 }

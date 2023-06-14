@@ -48,7 +48,7 @@ class BankController extends Controller
 
     public function Bankupdate (Request $request)
     {
-       
+
         $loginBy = $request->login_by;
 
         if (!isset($request->id)) {
@@ -64,18 +64,12 @@ class BankController extends Controller
             $id = $request->id;
             $Bank = Bank::find($id);
 
-            
-
-            $Bank->first_name = $request->first_name;
-            $Bank->last_name = $request->last_name;
             $Bank->name = $request->name;
             $Bank->status = $request->status;
-            $Bank->account_number = $request->account_number;
 
             if ($request->image && $request->image != null && $request->image != 'null') {
                 $Bank->image = $this->uploadImage($request->image, '/images/Delivered_by/');
             }
-            
             //$Bank->update_by = $loginBy->user_id;
             $Bank->updated_at = Carbon::now()->toDateTimeString();
             $Bank->save();
@@ -109,7 +103,7 @@ class BankController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
-        $col = array('id', 'name','first_name','last_name','account_number' ,'image','status','create_by', 'created_at', 'updated_at');
+        $col = array('id', 'name','image','status','create_by', 'created_at', 'updated_at');
 
         $d = Bank::select($col)->with('user_create')
             ->orderby($col[$order[0]['column']], $order[0]['dir']);
@@ -151,12 +145,12 @@ class BankController extends Controller
             return $this->returnErrorData('[id] Data Not Found', 404);
         }
 
-        $Bank = Bank:: 
+        $Bank = Bank::
 
            // ->with('location')
 
             find($id);
-  
+
 
         return $this->returnSuccess('Successful', $Bank);
     }
@@ -165,7 +159,7 @@ class BankController extends Controller
 
     public function getBank()
     {
-       
+
         $Bank = Bank::get()->toarray();
 
         if (!empty($Bank)) {
@@ -182,15 +176,12 @@ class BankController extends Controller
     public function store(Request $request)
     {
 
-        
+
         $loginBy = $request->login_by;
 
 
-        if (!isset($request->first_name)) {
+        if (!isset($request->name)) {
             return $this->returnErrorData('กรุณาใส่ชื่อ', 404);
-        }
-        else if (!isset($request->last_name)) {
-            return $this->returnErrorData('กรุณาใส่นามสกุล', 404);
         }
         else if (!isset($request->image)) {
             return $this->returnErrorData('กรุณาใส่รูป', 404);
@@ -199,12 +190,12 @@ class BankController extends Controller
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
 
-        $account_number = $request->account_number;
+        $name = $request->name;
 
-        $checkName = Bank::where('account_number', $account_number)->first();
+        $checkName = Bank::where('name', $name)->first();
 
         if ($checkName) {
-            return $this->returnErrorData('มีเลขบัญชีนี้อยู่แล้ว', 404);
+            return $this->returnErrorData('มีชื่อธนาคารอยู่แล้ว', 404);
 
         } else {
 
@@ -213,19 +204,18 @@ class BankController extends Controller
             try {
 
                 $Bank = new Bank();
-                $Bank->first_name = $request->first_name;
-                $Bank->image = $this->uploadImage($request->image, '/images/Delivered_by/');
                 $Bank->name = $request->name;
+                $Bank->image = $this->uploadImage($request->image, '/images/Delivered_by/');
+
                 $Bank->status = 1;
-                $Bank->last_name = $request->last_name;
-                $Bank->account_number = $account_number;
+
                 $Bank->create_by = $loginBy->user_id;
                 $Bank->save();
 
                 //log
                 $userId = $loginBy->user_id;
                 $type = 'Add Bank';
-                $description = 'User ' . $userId . ' has ' . $type . ' ' . $account_number;
+                $description = 'User ' . $userId . ' has ' . $type . ' ' . $Bank;
                 $this->Log($userId, $description, $type);
                 //
 
