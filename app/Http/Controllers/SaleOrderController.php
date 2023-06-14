@@ -186,6 +186,8 @@ class SaleOrderController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+
+        $saleId = $request->sale_id;
         $status = $request->status;
 
         // if (!isset($status)) {
@@ -229,6 +231,10 @@ class SaleOrderController extends Controller
             ->with('sale')
             ->with('user_create')
             ->with('item_code');
+
+        if ($saleId) {
+            $D->where('sale_id', $saleId);
+        }
 
         if ($status) {
             $D->where('status', $status);
