@@ -426,3 +426,8 @@ Route::get('/export_log', [LogController::class, 'ExportLog']);
 
 Route::get('/get_order_live_by_id/{id}', [SaleOrderController::class, 'getOrderLiveById']);
 
+//อัปเดตการชำระเงินลูกค้า
+Route::put('/payment_order_cm/{id}', [SaleOrderController::class, 'PaymentOrderCM']);
+
+
+

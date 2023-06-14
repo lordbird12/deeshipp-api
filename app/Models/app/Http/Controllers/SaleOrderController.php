@@ -40,11 +40,11 @@ class SaleOrderController extends Controller
     public function getSaleOrderApprove()
     {
         $Sale_order = Sale_order::where('status', 'confirm')->orderby('id', 'desc')->get()->toarray();
-        
+
         if (!empty($Sale_order)) {
-            
+
             $order = [];
-            
+
             for ($i = 0; $i < count($Sale_order); $i++) {
                 $Sale_order[$i]['No'] = $i + 1;
 
@@ -202,7 +202,7 @@ class SaleOrderController extends Controller
             'description',
             'name',
             'telephone',
-            'email',    
+            'email',
             'address',
             'shipping_price',
             'cod_price_surcharge',
@@ -470,8 +470,8 @@ class SaleOrderController extends Controller
 
                 //add order line
                 DB::table('sale_order_line')->insert($Order);
-              
-              
+
+
                 //log
                 $userId = $loginBy->user_id;
                 $type = 'ขายสินค้า';

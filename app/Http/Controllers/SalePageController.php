@@ -69,7 +69,7 @@ class SalePageController extends Controller
         if ($checkName) {
             return $this->returnErrorData('There is already this name in the system', 404);
         } else {
-     
+
             DB::beginTransaction();
 
             try {
@@ -80,7 +80,7 @@ class SalePageController extends Controller
                 $Sale_page->delivery_id = $request->delivery_id;
                 $Sale_page->bank_id = $request->bank_id;
                 //$Sale_page->name = $request->name;
-              
+
                 $Sale_page->sale_pages_url = $request->sale_pages_url;
                 $Sale_page->thank_you_url = $request->thank_you_url;
                 $Sale_page->link_line = $request->link_line;
@@ -114,7 +114,7 @@ class SalePageController extends Controller
                             $Salepage_promotion->name = $salepage_promotion[$i]['name'];
                             $Salepage_promotion->qty = $salepage_promotion[$i]['qty'];
                             $Salepage_promotion->price = $salepage_promotion[$i]['price'];
-                           
+
 
                             $Salepage_promotion->save();
                             break;
@@ -134,7 +134,7 @@ class SalePageController extends Controller
 
                 for ($j = 0; $j < count($sale_page_content); $j++) {
 
-                  
+
 
                     switch ($sale_page_content[$j]['action']) {
                         case 'insert':
@@ -151,8 +151,8 @@ class SalePageController extends Controller
                             $Salepage_line = Sale_page_line::find($sale_page_content[$j]['sale_page_line_id']);
                             $Salepage_line->text = $sale_page_content[$j]['text'];
                             $Salepage_line->html = $sale_page_content[$j]['html'];
-                           
-                           
+
+
 
                             $Salepage_promotion->save();
                             break;
@@ -244,13 +244,13 @@ class SalePageController extends Controller
         $sale_page = Sale_page::with('select_product')->with('sale_page_promotion')->with('sale_page_line')->with('html')
 
             ->find($id);
-  
+
 
         return $this->returnSuccess('Successful', $sale_page);
     }
     public function getSalePages()
     {
-       
+
         $Sale_page = Sale_page::get()->toarray();
 
         if (!empty($Sale_page)) {
@@ -267,7 +267,7 @@ class SalePageController extends Controller
     {
 
 
-      
+
         $sale_page_content = $request->sale_page_content;
 
         //dd($sale_page_link_social);
@@ -295,19 +295,19 @@ class SalePageController extends Controller
                 $Sale_page = new Sale_page();
                 //dd( $Item);
 
-        
+
                     $Sale_page->select_product_id = $request->select_product_id;
                     $Sale_page->name = $request->name;
 
                     $Sale_page->delivery_id = $request->delivery_id;
                     $Sale_page->bank_id = $request->bank_id;
 
-                    
+
                     $Sale_page->sale_pages_url = $request->sale_pages_url;
                     $Sale_page->thank_you_url = $request->thank_you_url;
                     $Sale_page->link_line = $request->link_line;
 
-                   
+
                     $Sale_page->link_facebook = $request->link_facebook;
 
                     $Sale_page->create_by = $loginBy->user_id;
@@ -320,18 +320,18 @@ class SalePageController extends Controller
                     for ($i = 0; $i < count($salepage_promotion); $i++) {
 
                         $salepage_promotion[$i]['sale_pages_id'] = $Sale_page->id;
-                        
+
 
                         $salepage_promotion[$i]['created_at'] = Carbon::now()->toDateTimeString();
                         $salepage_promotion[$i]['updated_at'] = Carbon::now()->toDateTimeString();
 
 
-                       
+
 
                     }
                     for ($j = 0; $j < count($sale_page_content); $j++) {
 
-                       
+
                        // $Sale_page_line = new Sale_page_line();
                         $sale_page_content[$j]['sale_pages_id'] = $Sale_page->id;
                       // $sale_page_line->text = $sale_page_line[$j]['text'];
@@ -348,7 +348,7 @@ class SalePageController extends Controller
                        $sale_page_content[$j]['created_at'] = Carbon::now()->toDateTimeString();
                        $sale_page_content[$j]['updated_at'] = Carbon::now()->toDateTimeString();
 
-                    } 
+                    }
 
 
                       //add sale_page_lines
@@ -356,14 +356,14 @@ class SalePageController extends Controller
                     //add sale_page_promotions
                       DB::table('sale_page_promotions')->insert($salepage_promotion);
 
-                   
-                    
-                
+
+
+
 
                     DB::commit();
 
                     return $this->returnSuccess('Successful operation', $Sale_page);
-                
+
             } catch (\Throwable $e) {
 
                 DB::rollback();

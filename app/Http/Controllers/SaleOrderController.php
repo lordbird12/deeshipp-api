@@ -1848,4 +1848,51 @@ class SaleOrderController extends Controller
             return false;
         }
     }
+
+    public function PaymentOrderCM(Request $request, $id)
+    {
+
+        $name = $request->name;
+        $telephone = $request->telephone;
+        $address = $request->address;
+        $payment_type = $request->payment_type;
+
+        if (!isset($id)) {
+            return $this->returnErrorData('[id] Data Not Found', 404);
+        }
+        if (!isset($name)) {
+            return $this->returnErrorData('กรุณาระบุชื่อในการจัดส่ง', 404);
+        } else if (!isset($telephone)) {
+            return $this->returnErrorData('กรุณาระบุเบอร์โทรในการจัดส่ง', 404);
+        } else if (!isset($address)) {
+            return $this->returnErrorData('กรุณาระบุที่อยู่ในการจัดส่ง', 404);
+        } else if (!isset($payment_type)) {
+            return $this->returnErrorData('กรุณาเลือกช่องทางในการจัดส่ง', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $Sale_order = Sale_order::find($id);
+            $Sale_order->name = $name;
+            $Sale_order->telephone = $telephone;
+            $Sale_order->address =  $address;
+            $Sale_order->payment_type = $payment_type;
+
+            $Sale_order->updated_at = Carbon::now()->toDateTimeString();
+
+            $Sale_order->save();
+
+
+            DB::commit();
+
+            return $this->returnUpdate('Successful operation');
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+        }
+    }
 }
