@@ -63,5 +63,10 @@ class User extends Model
         return $this->hasMany(User_bank::class);
     }
 
+    public function items()
+    {
+        return $this->hasMany(Item::class);
+    }
+
 
 }

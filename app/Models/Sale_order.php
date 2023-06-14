@@ -70,7 +70,7 @@ class Sale_order extends Model
         return $this->hasMany(Item_trans::class);
     }
 
-    
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -115,7 +115,7 @@ class Sale_order extends Model
 
     public  function sale ()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'sale_id','id');
     }
 
     public  function user_create ()

@@ -28,12 +28,16 @@ class ItemController extends Controller
 {
 
 
-    public function getItemAll()
+    public function getItemAll(Request $request)
     {
-      
-     // $User = User::get()->toarray();
-       
-        $User = Item::get()->toarray();
+
+        $userId = $request->user_id;
+
+        if (!isset($request->user_id)) {
+            return $this->returnErrorData('[user_id] Data Not Found', 404);
+        }
+
+        $User = Item::where('user_id', $userId)->get()->toarray();
         if (!empty($User)) {
 
             for ($i = 0; $i < count($User); $i++) {
@@ -93,9 +97,6 @@ class ItemController extends Controller
                 $Order->updated_at = Carbon::now()->toDateTimeString();
 
                 $Order->save();
-
-
-
             } else if ($request->set_type  == 'set_products') {
 
                 $Order = Item::find($id);
@@ -113,7 +114,7 @@ class ItemController extends Controller
 
                     switch ($item_line[$i]['action']) {
                         case 'insert':
-                            
+
                             $newItemLine = new Item_line();
                             $newItemLine->item_id = $item_line[$i]['item_id'];
                             $newItemLine->main_item_id = $id;
@@ -134,19 +135,16 @@ class ItemController extends Controller
                             $Item_line->save();
                             break;
 
-                            case 'delete':
-                                $Item_line = Item_line::find($item_line[$i]['item_line_id']);
+                        case 'delete':
+                            $Item_line = Item_line::find($item_line[$i]['item_line_id']);
 
-                                 $Item_line->delete();
-                                break;
+                            $Item_line->delete();
+                            break;
 
                         default:
                             # code...
                             break;
                     }
-
-                   
-                  
                 }
             }
 
@@ -166,16 +164,23 @@ class ItemController extends Controller
     public function getItem(Request $request)
     {
 
+        $userId = $request->user_id;
         $item_type_id = $request->item_type_id;
+
+
+        if (!isset($request->user_id)) {
+            return $this->returnErrorData('[user_id] Data Not Found', 404);
+        }
 
         if (!isset($request->item_type_id)) {
             return $this->returnErrorData('[item_type_id] Data Not Found', 404);
         }
 
         $Item = Item::with('item_type')
-
+            ->with('user')
             ->with('location')
             ->where('item_type_id', $item_type_id)
+            ->where('user_id', $userId)
             ->where('status', 1)
             ->get()
             ->toarray();
@@ -221,6 +226,7 @@ class ItemController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        $userId = $request->user_id;
         $item_type_id = $request->item_type_id;
         $set_type = $request->set_type;
 
@@ -250,13 +256,17 @@ class ItemController extends Controller
 
         $d = Item::select($col)
 
-             ->with('user_create')
+            ->with('user_create')
             ->with('item_type')
             ->with('location.warehouse')
             ->with('main_itemLine.item')
-           
+
             //->where('item_type_id', $item_type_id)
             ->where('set_type', $set_type);
+
+        if ($userId) {
+            $d->where('user_id', $userId);
+        }
 
 
         if ($item_type_id) {
@@ -341,6 +351,8 @@ class ItemController extends Controller
 
                 $Item = new Item();
 
+                $Item->user_id = $loginBy->id; // user_id
+
                 $itemId = $request->item_id;
                 $Item->item_id = $this->getLastNumber(5);
                 $itemId;
@@ -416,14 +428,13 @@ class ItemController extends Controller
 
         if (!isset($request->name)) {
             return $this->returnErrorData('กรุณาเพิ่มชื่อสินค้า', 404);
-        }else if (!isset($request->item_type_id)) {
+        } else if (!isset($request->item_type_id)) {
             return $this->returnErrorData('กรุณาเลือกหมวดหมู่', 404);
-        }
-         else if (!isset($request->brand)) {
+        } else if (!isset($request->brand)) {
             return $this->returnErrorData('กรุณาใส่แบรนด์สินค้า', 404);
         } else if (!isset($request->image)) {
             return $this->returnErrorData('กรุณาเพิ่มรูปสินค้า', 404);
-        } else if (!isset($request->unit_cost)&& $request->set_type == 'normal') {
+        } else if (!isset($request->unit_cost) && $request->set_type == 'normal') {
             return $this->returnErrorData('กรุณาใส่ต้นทุนสินค้า', 404);
         } else if (!isset($request->unit_price) && $request->set_type == 'normal') {
             return $this->returnErrorData('กรุณาใส่ราคาสินค้า', 404);
@@ -466,7 +477,7 @@ class ItemController extends Controller
                     $Item->vendor_id = $request->vendor_id;
 
                     $Item->set_type = $request->set_type;
-                    
+
                     $Item->brand = $request->brand;
                     $Item->unit_cost = $request->unit_cost;
                     $Item->unit_price = $request->unit_price;
@@ -491,9 +502,6 @@ class ItemController extends Controller
 
                     DB::commit();
                     return $this->returnSuccess('Successful operation', $Item);
-
-                    
-                    
                 } else if ($request->set_type  == 'set_products') {
 
                     $itemId = $request->item_id;
@@ -507,7 +515,7 @@ class ItemController extends Controller
                     $Item->brand = $request->brand;
                     $Item->description = $request->description;
 
-                  
+
                     $Item->set_type = $request->set_type;
 
 
@@ -521,12 +529,12 @@ class ItemController extends Controller
 
 
 
-                 
+
 
                     for ($i = 0; $i < count($item_line); $i++) {
 
 
-                        
+
                         $item_line[$i]['main_item_id'] = $Item->id;
 
                         $item_line[$i]['created_at'] = Carbon::now()->toDateTimeString();
@@ -535,38 +543,35 @@ class ItemController extends Controller
                         $Item_trans = new Item_trans();
                         //qty withdraw
                         $qty = -$item_line[$i]['qty'];
-    
+
                         $Item_Line = Item::where('id', $item_line[$i]['item_id'])->first();
-    
-                         $stockCount = $this->getStockCount($item_line[$i]['item_id'], []);
-    
-    
-                            if (abs($qty) > $stockCount) {
-                                return $this->returnErrorData('สินค้าบางอย่างไม่พอที่จะจัดเซ็ต', 404);
-                            }
-        
-        
-                            $Item_trans->description = "products Promotion";
-                            $Item_trans->item_id = $Item_Line->id;
-                            $Item_trans->qty = $qty;
-                            $Item_trans->main_item_id = $Item->id;
-        
-                            $Item_trans->location_1_id = $Item_Line->location_id;
-        
-        
-                            $Item_trans->customer_id = $request->customer_id;
-                            $Item_trans->stock = $stockCount;
-                            $Item_trans->balance = $stockCount - abs($qty);
-                            $Item_trans->status = 1;
-                            $Item_trans->operation = 'booking';
-                            $Item_trans->date = $request->date_time;
-                            $Item_trans->type = 'Withdraw';
-                            $Item_trans->create_by = $loginBy->user_id;
-        
-                            $Item_trans->save();
-        
+
+                        $stockCount = $this->getStockCount($item_line[$i]['item_id'], []);
 
 
+                        if (abs($qty) > $stockCount) {
+                            return $this->returnErrorData('สินค้าบางอย่างไม่พอที่จะจัดเซ็ต', 404);
+                        }
+
+
+                        $Item_trans->description = "products Promotion";
+                        $Item_trans->item_id = $Item_Line->id;
+                        $Item_trans->qty = $qty;
+                        $Item_trans->main_item_id = $Item->id;
+
+                        $Item_trans->location_1_id = $Item_Line->location_id;
+
+
+                        $Item_trans->customer_id = $request->customer_id;
+                        $Item_trans->stock = $stockCount;
+                        $Item_trans->balance = $stockCount - abs($qty);
+                        $Item_trans->status = 1;
+                        $Item_trans->operation = 'booking';
+                        $Item_trans->date = $request->date_time;
+                        $Item_trans->type = 'Withdraw';
+                        $Item_trans->create_by = $loginBy->user_id;
+
+                        $Item_trans->save();
                     }
 
                     //add Item line
@@ -606,7 +611,7 @@ class ItemController extends Controller
         }
 
         $Item = Item::with('item_type')
-
+            ->with('user')
             ->with('location')
             ->with('vendor')
 
@@ -713,7 +718,7 @@ class ItemController extends Controller
 
                 DB::commit();
 
-                return $this->returnUpdate('Successful operation',$Item);
+                return $this->returnUpdate('Successful operation', $Item);
             } catch (\Throwable $e) {
 
                 DB::rollback();
@@ -762,5 +767,4 @@ class ItemController extends Controller
             return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
         }
     }
-
 }

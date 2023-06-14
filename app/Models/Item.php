@@ -41,7 +41,7 @@ class Item extends Model
     {
         return $this->belongsTo(User::class,'create_by','user_id');
     }
-    
+
     public function item_type()
     {
         return $this->belongsTo(Item_type::class);
@@ -52,7 +52,12 @@ class Item extends Model
         return $this->hasMany(Item_trans::class);
     }
 
-   
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+
 
     //unit
     public function unit_store()
@@ -91,7 +96,7 @@ class Item extends Model
      }
 
 
-   
+
 
     //spare
     public function Spare_type()

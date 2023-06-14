@@ -270,7 +270,7 @@ Route::group(['middleware' => 'checkjwt'], function () {
 
     //Item
     Route::post('/get_item', [ItemController::class, 'getItem']);
-    Route::get('/get_item_all', [ItemController::class, 'getItemAll']);
+    Route::post('/get_item_all', [ItemController::class, 'getItemAll']);
     Route::put('/update2_item/{id}', [ItemController::class, 'update2']);
     Route::resource('item', ItemController::class);
     Route::post('/item_page', [ItemController::class, 'ItemPage']);
