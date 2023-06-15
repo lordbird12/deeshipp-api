@@ -2209,8 +2209,8 @@ class SaleOrderController extends Controller
 
                 $item_lines = $Sale_order->sale_order_lines;
 
+                //รายการสิ้นค้า
                 $product = "";
-
                 foreach ($item_lines as $item) {
                     $text = "- {$item->item->name} {$item->qty} ชิ้น ราคา {$item->total} บาท\n";
                     $product .= $text;
