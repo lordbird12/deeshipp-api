@@ -42,7 +42,15 @@ class UserController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
-        $user_ref_id = $request->user_ref_id;
+         //check user
+         $loginBy = $request->login_by;
+
+         if ($loginBy->permission->id == 1) {
+             $userId = null;
+         } else {
+             $userId = $loginBy->id;
+         }
+         //
 
         $Status = $request->status;
 
@@ -57,8 +65,8 @@ class UserController extends Controller
             ->with('user_ref')
             ->with('user_create');
 
-        if ($user_ref_id) {
-            $D->where('user_ref_id', $user_ref_id);
+        if ($userId) {
+            $D->where('user_ref_id', $userId);
         }
 
         if ($Status) {

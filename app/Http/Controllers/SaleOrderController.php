@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Imports\SaleOrderImport;
 use App\Models\Customer;
 use App\Models\CustomerLine;
+use App\Models\Delivered_by;
 use App\Models\Item;
 use App\Models\Item_line;
 use App\Models\Item_trans;
@@ -194,8 +195,16 @@ class SaleOrderController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        //check sale
+        $loginBy = $request->login_by;
 
-        $saleId = $request->sale_id;
+        if ($loginBy->permission->id == 1) {
+            $saleId = null;
+        } else {
+            $saleId = $loginBy->id;
+        }
+        //
+
         $status = $request->status;
 
         // if (!isset($status)) {
@@ -1071,214 +1080,214 @@ class SaleOrderController extends Controller
     }
 
 
-    public function ImportSaleOrder(Request $request)
-    {
-        $customerId = $request->customer_id;
-        $approve = $request->approve;
+    // public function ImportSaleOrder(Request $request)
+    // {
+    //     $customerId = $request->customer_id;
+    //     $approve = $request->approve;
 
-        $date = $request->date;
+    //     $date = $request->date;
 
-        $loginBy = $request->login_by;
+    //     $loginBy = $request->login_by;
 
-        if (!isset($customerId)) {
-            return $this->returnErrorData('[customer_id] Data Not Found', 404);
-        } else if (!isset($date)) {
-            return $this->returnErrorData('[date] Data Not Found', 404);
-        } else if (!isset($approve)) {
-            return $this->returnErrorData('[approve] Data Not Found', 404);
-        } else if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
+    //     if (!isset($customerId)) {
+    //         return $this->returnErrorData('[customer_id] Data Not Found', 404);
+    //     } else if (!isset($date)) {
+    //         return $this->returnErrorData('[date] Data Not Found', 404);
+    //     } else if (!isset($approve)) {
+    //         return $this->returnErrorData('[approve] Data Not Found', 404);
+    //     } else if (!isset($loginBy)) {
+    //         return $this->returnErrorData('[login_by] Data Not Found', 404);
+    //     }
 
-        $file = request()->file('file');
-        $fileName = $file->getClientOriginalName();
+    //     $file = request()->file('file');
+    //     $fileName = $file->getClientOriginalName();
 
-        $Data = Excel::toArray(new SaleOrderImport(), $file);
-        $data = $Data[0];
+    //     $Data = Excel::toArray(new SaleOrderImport(), $file);
+    //     $data = $Data[0];
 
-        if (count($data) > 0) {
+    //     if (count($data) > 0) {
 
-            DB::beginTransaction();
+    //         DB::beginTransaction();
 
-            try {
+    //         try {
 
-                //group item
-                $item = [];
-                for ($i = 0; $i < count($data); $i++) {
-                    $item[$i]['item_id'] = trim($data[$i]['drawing_no'] . $data[$i]['cm']);
+    //             //group item
+    //             $item = [];
+    //             for ($i = 0; $i < count($data); $i++) {
+    //                 $item[$i]['item_id'] = trim($data[$i]['drawing_no'] . $data[$i]['cm']);
 
-                    $strDate = trim($data[$i]['del_date']);
-                    $dateDelDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($strDate));
-                    $DelDate = date("Y-m-d", strtotime($dateDelDate));
+    //                 $strDate = trim($data[$i]['del_date']);
+    //                 $dateDelDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($strDate));
+    //                 $DelDate = date("Y-m-d", strtotime($dateDelDate));
 
-                    $item[$i]['del_date'] = $DelDate;
-                }
+    //                 $item[$i]['del_date'] = $DelDate;
+    //             }
 
-                $Item = array();
+    //             $Item = array();
 
-                foreach ($item as $current) {
-                    if (!in_array($current, $Item)) {
-                        $Item[] = $current;
-                    }
-                }
-                //
+    //             foreach ($item as $current) {
+    //                 if (!in_array($current, $Item)) {
+    //                     $Item[] = $current;
+    //                 }
+    //             }
+    //             //
 
-                $trnasNo = date('YmdHis') . rand(0, 999);
+    //             $trnasNo = date('YmdHis') . rand(0, 999);
 
-                /////////////////////////////////// add sale order ///////////////////////////////////
-                for ($i = 0; $i < count($Item); $i++) {
+    //             /////////////////////////////////// add sale order ///////////////////////////////////
+    //             for ($i = 0; $i < count($Item); $i++) {
 
-                    //check item
-                    $checkItem = Item::where('item_id', $Item[$i]['item_id'])->first();
-                    if (!$checkItem) {
-                        return $this->returnErrorData('Item Id ' . $Item[$i]['item_id'] . ' was not found in the system', 404);
-                    }
+    //                 //check item
+    //                 $checkItem = Item::where('item_id', $Item[$i]['item_id'])->first();
+    //                 if (!$checkItem) {
+    //                     return $this->returnErrorData('Item Id ' . $Item[$i]['item_id'] . ' was not found in the system', 404);
+    //                 }
 
-                    $ItemId = $checkItem->id;
+    //                 $ItemId = $checkItem->id;
 
-                    //add sale order
-                    $Sale_order = new Sale_order();
-                    $Sale_order->order_id = $this->getLastNumber(5);
+    //                 //add sale order
+    //                 $Sale_order = new Sale_order();
+    //                 $Sale_order->order_id = $this->getLastNumber(5);
 
-                    //run number
-                    $this->setRunDoc(5, $Sale_order->order_id);
+    //                 //run number
+    //                 $this->setRunDoc(5, $Sale_order->order_id);
 
-                    $Sale_order->date = $date;
-                    $Sale_order->item_id = $ItemId;
-                    $Sale_order->customer_id = $customerId;
+    //                 $Sale_order->date = $date;
+    //                 $Sale_order->item_id = $ItemId;
+    //                 $Sale_order->customer_id = $customerId;
 
-                    $Sale_order->transection_no = $trnasNo;
-                    $Sale_order->del_date = $Item[$i]['del_date'];
+    //                 $Sale_order->transection_no = $trnasNo;
+    //                 $Sale_order->del_date = $Item[$i]['del_date'];
 
-                    if ($approve == 1 || $approve == '1') {
-                        $Sale_order->status = 'Approved';
-                    } else {
-                        $Sale_order->status = 'Open';
-                    }
+    //                 if ($approve == 1 || $approve == '1') {
+    //                     $Sale_order->status = 'Approved';
+    //                 } else {
+    //                     $Sale_order->status = 'Open';
+    //                 }
 
-                    $Sale_order->user_id = null;
+    //                 $Sale_order->user_id = null;
 
-                    $Sale_order->save();
-                }
+    //                 $Sale_order->save();
+    //             }
 
-                //////////////////////////////////////////////////////////////////////////////////////
+    //             //////////////////////////////////////////////////////////////////////////////////////
 
-                /////////////////////////////////// add sale order line ///////////////////////////////////
+    //             /////////////////////////////////// add sale order line ///////////////////////////////////
 
-                for ($i = 0; $i < count($data); $i++) {
+    //             for ($i = 0; $i < count($data); $i++) {
 
-                    //body
-                    $itemId = trim($data[$i]['drawing_no'] . $data[$i]['cm']);
-                    $itemName = trim($data[$i]['description']);
-                    $poNo = trim($data[$i]['po_no']);
-                    $qty = trim($data[$i]['po_qty']);
-                    $delDate = trim($data[$i]['del_date']);
-                    $unit = trim($data[$i]['unit']);
-                    $unitPrice = trim($data[$i]['price']);
+    //                 //body
+    //                 $itemId = trim($data[$i]['drawing_no'] . $data[$i]['cm']);
+    //                 $itemName = trim($data[$i]['description']);
+    //                 $poNo = trim($data[$i]['po_no']);
+    //                 $qty = trim($data[$i]['po_qty']);
+    //                 $delDate = trim($data[$i]['del_date']);
+    //                 $unit = trim($data[$i]['unit']);
+    //                 $unitPrice = trim($data[$i]['price']);
 
-                    $row = $i + 2;
+    //                 $row = $i + 2;
 
-                    if ($itemId == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter item id', 404);
-                    } else if ($itemName == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter description', 404);
-                    } else if ($poNo == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter po no', 404);
-                    } else if ($qty == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter po qty', 404);
-                    } else if ($delDate == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter del date', 404);
-                    } else if ($unit == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter unit', 404);
-                    } else if ($unitPrice == '') {
-                        return $this->returnErrorData('Row excel data ' . $row . ' please enter unit price', 404);
-                    }
+    //                 if ($itemId == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter item id', 404);
+    //                 } else if ($itemName == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter description', 404);
+    //                 } else if ($poNo == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter po no', 404);
+    //                 } else if ($qty == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter po qty', 404);
+    //                 } else if ($delDate == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter del date', 404);
+    //                 } else if ($unit == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter unit', 404);
+    //                 } else if ($unitPrice == '') {
+    //                     return $this->returnErrorData('Row excel data ' . $row . ' please enter unit price', 404);
+    //                 }
 
-                    //check row sample
-                    if ($poNo == 'SIMPLE-000') {
-                        //
-                    } else {
+    //                 //check row sample
+    //                 if ($poNo == 'SIMPLE-000') {
+    //                     //
+    //                 } else {
 
-                        //check item
-                        $checkItem = Item::where('item_id', $itemId)->first();
-                        if (!$checkItem) {
-                            return $this->returnErrorData('Item Id ' . $itemId . ' was not found in the system', 404);
-                        }
-                        $ItemId = $checkItem->id;
+    //                     //check item
+    //                     $checkItem = Item::where('item_id', $itemId)->first();
+    //                     if (!$checkItem) {
+    //                         return $this->returnErrorData('Item Id ' . $itemId . ' was not found in the system', 404);
+    //                     }
+    //                     $ItemId = $checkItem->id;
 
-                        //check Unit convertion
-                        if ($unit) {
-                            $Unit_convertion = Unit_convertion::where('name', $unit)->first();
-                            if (!$Unit_convertion) {
-                                return $this->returnErrorData('Unit ' . $unit . ' was not found in the system', 404);
-                            }
+    //                     //check Unit convertion
+    //                     if ($unit) {
+    //                         $Unit_convertion = Unit_convertion::where('name', $unit)->first();
+    //                         if (!$Unit_convertion) {
+    //                             return $this->returnErrorData('Unit ' . $unit . ' was not found in the system', 404);
+    //                         }
 
-                            $unitConvertionId = $Unit_convertion->id;
-                        } else {
-                            $unitConvertionId = null;
-                        }
+    //                         $unitConvertionId = $Unit_convertion->id;
+    //                     } else {
+    //                         $unitConvertionId = null;
+    //                     }
 
-                        //delDate
-                        $dateDelDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($delDate));
-                        $DelDate = date("Y-m-d", strtotime($dateDelDate));
+    //                     //delDate
+    //                     $dateDelDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($delDate));
+    //                     $DelDate = date("Y-m-d", strtotime($dateDelDate));
 
-                        //
-                        $Sale_order = Sale_order::where('item_id', $ItemId)
-                            ->where('transection_no', $trnasNo)
-                            ->where('del_date', $DelDate)
-                            ->first();
+    //                     //
+    //                     $Sale_order = Sale_order::where('item_id', $ItemId)
+    //                         ->where('transection_no', $trnasNo)
+    //                         ->where('del_date', $DelDate)
+    //                         ->first();
 
-                        //seq
-                        $seq = Sale_order_line::where('sale_order_id', $Sale_order->id)
-                            ->orderby('seq', 'DESC')
-                            ->first();
+    //                     //seq
+    //                     $seq = Sale_order_line::where('sale_order_id', $Sale_order->id)
+    //                         ->orderby('seq', 'DESC')
+    //                         ->first();
 
-                        if ($seq) {
-                            $SEQ = intval($seq->seq) + 1;
-                        } else {
-                            $SEQ = 1;
-                        }
-                        //
+    //                     if ($seq) {
+    //                         $SEQ = intval($seq->seq) + 1;
+    //                     } else {
+    //                         $SEQ = 1;
+    //                     }
+    //                     //
 
-                        $Sale_order_line = new Sale_order_line();
-                        $Sale_order_line->sale_order_id = $Sale_order->id; //id
-                        $Sale_order_line->seq = $SEQ;
-                        $Sale_order_line->item_id = $ItemId;
-                        $Sale_order_line->item_name = $itemName;
-                        $Sale_order_line->po_no = $poNo;
-                        $Sale_order_line->del_date = $DelDate;
-                        $Sale_order_line->qty = $qty;
-                        $Sale_order_line->unit_convertion_id = $unitConvertionId;
-                        $Sale_order_line->unit_price = floatval($unitPrice);
+    //                     $Sale_order_line = new Sale_order_line();
+    //                     $Sale_order_line->sale_order_id = $Sale_order->id; //id
+    //                     $Sale_order_line->seq = $SEQ;
+    //                     $Sale_order_line->item_id = $ItemId;
+    //                     $Sale_order_line->item_name = $itemName;
+    //                     $Sale_order_line->po_no = $poNo;
+    //                     $Sale_order_line->del_date = $DelDate;
+    //                     $Sale_order_line->qty = $qty;
+    //                     $Sale_order_line->unit_convertion_id = $unitConvertionId;
+    //                     $Sale_order_line->unit_price = floatval($unitPrice);
 
-                        $Sale_order_line->create_by = $loginBy->user_id;
-                        $Sale_order_line->created_at = date('Y-m-d H:i:s');
-                        $Sale_order_line->updated_at = date('Y-m-d H:i:s');
-                        $Sale_order_line->save();
-                    }
-                }
+    //                     $Sale_order_line->create_by = $loginBy->user_id;
+    //                     $Sale_order_line->created_at = date('Y-m-d H:i:s');
+    //                     $Sale_order_line->updated_at = date('Y-m-d H:i:s');
+    //                     $Sale_order_line->save();
+    //                 }
+    //             }
 
-                //////////////////////////////////////////////////////////////////////////////////////
+    //             //////////////////////////////////////////////////////////////////////////////////////
 
-                //log
-                $userId = $loginBy->user_id;
-                $type = 'Import Sale Oder';
-                $description = 'User ' . $userId . ' has ' . $type;
-                $this->Log($userId, $description, $type);
+    //             //log
+    //             $userId = $loginBy->user_id;
+    //             $type = 'Import Sale Oder';
+    //             $description = 'User ' . $userId . ' has ' . $type;
+    //             $this->Log($userId, $description, $type);
 
-                DB::commit();
+    //             DB::commit();
 
-                return $this->returnSuccess('Successful operation', []);
-            } catch (\Throwable $e) {
+    //             return $this->returnSuccess('Successful operation', []);
+    //         } catch (\Throwable $e) {
 
-                DB::rollback();
+    //             DB::rollback();
 
-                return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
-            }
-        } else {
-            return $this->returnErrorData('Data Not Found', 404);
-        }
-    }
+    //             return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+    //         }
+    //     } else {
+    //         return $this->returnErrorData('Data Not Found', 404);
+    //     }
+    // }
 
     public function addOrderFromLine($bot_msg)
     {
@@ -1914,5 +1923,100 @@ class SaleOrderController extends Controller
         }
     }
 
+    public function confirmMultiOrder(Request $request)
+    {
 
+        $saleOrderId = $request->sale_order_id;
+        $status = $request->status;
+
+        $loginBy = $request->login_by;
+
+        if (empty($saleOrderId)) {
+            return $this->returnErrorData('กรุณาระบุ รายการออเดอร์', 404);
+        } else if (!isset($status)) {
+            return $this->returnErrorData('กรุณาระบุสถานะ', 404);
+        } else if (!isset($loginBy)) {
+            return $this->returnErrorData('กรุณาเข้าสู่ระบบ', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            for ($i = 0; $i < count($saleOrderId); $i++) {
+
+                //update sale order
+                $Sale_order = Sale_order::find($saleOrderId[$i]);
+                $Sale_order->status = $status;
+
+                $Sale_order->update_by = $loginBy->user_id;
+                $Sale_order->updated_at = Carbon::now()->toDateTimeString();
+
+                $Sale_order->save();
+            }
+
+            DB::commit();
+
+            return $this->returnSuccess('Successful operation', []);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+        }
+    }
+
+    public function selectDelMultiOrder(Request $request)
+    {
+        $saleOrderId = $request->sale_order_id;
+        $deliveredById = $request->delivered_by_id;
+        $paymentQty = $request->payment_qty;
+
+        $loginBy = $request->login_by;
+
+        if (empty($saleOrderId)) {
+            return $this->returnErrorData('กรุณาระบุ รายการออเดอร์', 404);
+        } else if (!isset($deliveredById)) {
+            return $this->returnErrorData('กรุณาเลือกขนส่ง', 404);
+        } else if (!isset($paymentQty)) {
+            return $this->returnErrorData('กรุณาระบุราคา', 404);
+        } else if (!isset($loginBy)) {
+            return $this->returnErrorData('กรุณาเข้าสู่ระบบ', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $Delivered_by =   Delivered_by::find($deliveredById);
+
+            if (!$Delivered_by) {
+                return $this->returnErrorData('ไม่พบข้อมูลขนส่ง', 404);
+            }
+
+            for ($i = 0; $i < count($saleOrderId); $i++) {
+
+                //update sale order
+                $Sale_order = Sale_order::find($saleOrderId[$i]);
+
+                $Sale_order->delivery_by_id =  $deliveredById;
+                $Sale_order->payment_qty = $paymentQty;
+                $Sale_order->status = 'packing';
+
+                $Sale_order->update_by = $loginBy->user_id;
+                $Sale_order->updated_at = Carbon::now()->toDateTimeString();
+
+                $Sale_order->save();
+            }
+
+            DB::commit();
+
+            return $this->returnSuccess('Successful operation', []);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+        }
+    }
 }
