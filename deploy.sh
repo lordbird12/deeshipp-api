@@ -11,7 +11,7 @@ git reset --hard origin/main
 composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
 # Migrate database
-php artisan migrate --force
+# php artisan migrate --force
 
 # Clear cache
 php artisan optimize
