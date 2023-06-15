@@ -31,21 +31,34 @@ class ItemController extends Controller
     public function getItemAll(Request $request)
     {
 
-        $userId = $request->user_id;
+        //check user
+        $loginBy = $request->login_by;
 
-        if (!isset($request->user_id)) {
-            return $this->returnErrorData('[user_id] Data Not Found', 404);
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else {
+            $userId = $loginBy->id;
+        }
+        //
+
+        $item = Item::with('item_type')
+            ->with('user')
+            ->with('location');
+
+        if ($userId) {
+            $item->where('user_id', $userId);
         }
 
-        $User = Item::where('user_id', $userId)->get()->toarray();
-        if (!empty($User)) {
+        $Item = $item->get()
+            ->toarray();
+        if (!empty($Item)) {
 
-            for ($i = 0; $i < count($User); $i++) {
-                $User[$i]['No'] = $i + 1;
+            for ($i = 0; $i < count($Item); $i++) {
+                $Item[$i]['No'] = $i + 1;
             }
         }
 
-        return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $User);
+        return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $Item);
     }
 
     public function update2(Request $request, $id)
@@ -164,24 +177,31 @@ class ItemController extends Controller
     public function getItem(Request $request)
     {
 
-        $userId = $request->user_id;
-        $item_type_id = $request->item_type_id;
+        //check user
+        $loginBy = $request->login_by;
 
-
-        if (!isset($request->user_id)) {
-            return $this->returnErrorData('[user_id] Data Not Found', 404);
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else {
+            $userId = $loginBy->id;
         }
+        //
+
+        $item_type_id = $request->item_type_id;
 
         if (!isset($request->item_type_id)) {
             return $this->returnErrorData('[item_type_id] Data Not Found', 404);
         }
 
-        $Item = Item::with('item_type')
+        $item = Item::with('item_type')
             ->with('user')
             ->with('location')
-            ->where('item_type_id', $item_type_id)
-            ->where('user_id', $userId)
-            ->where('status', 1)
+            ->where('item_type_id', $item_type_id);
+
+        if ($userId) {
+            $item->where('user_id', $userId);
+        }
+        $Item = $item->where('status', 1)
             ->get()
             ->toarray();
 
@@ -226,7 +246,16 @@ class ItemController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
-        $userId = $request->user_id;
+        //check user
+        $loginBy = $request->login_by;
+
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else {
+            $userId = $loginBy->id;
+        }
+        //
+
         $item_type_id = $request->item_type_id;
         $set_type = $request->set_type;
 

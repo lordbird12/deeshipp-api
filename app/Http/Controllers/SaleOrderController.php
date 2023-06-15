@@ -186,8 +186,16 @@ class SaleOrderController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        //check sale
+        $loginBy = $request->login_by;
 
-        $saleId = $request->sale_id;
+        if($loginBy->permission->id == 1){
+            $saleId = null;
+        }else{
+            $saleId = $loginBy->id;
+        }
+        //
+
         $status = $request->status;
 
         // if (!isset($status)) {
