@@ -2166,15 +2166,15 @@ class SaleOrderController extends Controller
             //ค้นหา page ที่
             $page = User_page::where('page_id', $Sale_order->page_id)->first();
 
-            if ($page) {
+            // if ($page) {
                 //ส่งข้อความไปยืนยันกับลูกค้า
-                $this->_facebookApi->SendPrivateMessageToUser(
-                    $page->page_id,
-                    $page->token,
-                    $Sale_order->fb_user_id,
-                    'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
-                );
-            }
+                // $this->_facebookApi->SendMessageFromLiveToUser(
+                //     $page->page_id,
+                //     $page->token,
+                //     $Sale_order->fb_comment_id,
+                //     'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
+                // );
+            // }
 
 
             return $this->returnSuccess('Successful operation', $Sale_order);
