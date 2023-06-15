@@ -2205,6 +2205,13 @@ class SaleOrderController extends Controller
                     $Sale_order->fb_user_id,
                     'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
                 );
+
+                $this->_facebookApi->SendPrivateMessageToUser(
+                    $page->page_id,
+                    $page->token,
+                    $Sale_order->fb_user_id,
+                    "ที่อยู่จัดส่ง\nชื่อ {$Sale_order->name}\nโทร {$Sale_order->telephone}\nที่อยู่ {$Sale_order->address}",
+                );
             }
 
 
