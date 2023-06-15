@@ -1988,7 +1988,7 @@ class SaleOrderController extends Controller
 
         try {
 
-            $Delivered_by =   Delivered_by::find($deliveredById);
+            $Delivered_by = Delivered_by::find($deliveredById);
 
             if (!$Delivered_by) {
                 return $this->returnErrorData('ไม่พบข้อมูลขนส่ง', 404);
@@ -2002,6 +2002,8 @@ class SaleOrderController extends Controller
                 $Sale_order->delivery_by_id =  $deliveredById;
                 $Sale_order->payment_qty = $paymentQty;
                 $Sale_order->status = 'packing';
+
+                $Sale_order->track_no = strtoupper(uniqid('TRACK', true));
 
                 $Sale_order->update_by = $loginBy->user_id;
                 $Sale_order->updated_at = Carbon::now()->toDateTimeString();
