@@ -16,7 +16,6 @@ use App\Models\Sale_order;
 use App\Models\Sale_order_line;
 use App\Models\Unit_convertion;
 use App\Models\User;
-use App\Models\User_page;
 use App\Services\FacebookApi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1685,8 +1684,7 @@ class SaleOrderController extends Controller
         $ItemReal = ProductLive::where('code', $item_id)->first();
 
         if (!$ItemReal) {
-            // return $this->returnErrorData('ไม่มีรหัสสินค้า ' . $item_id . ' ในระบบ', 404);
-            return $this->returnSuccess('Successful operation', null);
+            return $this->returnErrorData('ไม่มีรหัสสินค้า ' . $item_id . ' ในระบบ', 404);
         }
 
         $Item = Item::find($ItemReal->item_id);
@@ -1825,6 +1823,13 @@ class SaleOrderController extends Controller
                 $Sale_order->customer_id = $Customer->id;
                 $Sale_order->payment_type = "";
                 $Sale_order->create_by = "Live";
+
+                $Sale_order->page_id = $page_id;
+                $Sale_order->fb_user_id = $fb_user_id;
+                $Sale_order->fb_comment_id = $fb_comment_id;
+
+                $Sale_order->sale_id = $request->sale_id;
+
                 $Sale_order->save();
 
                 //stock Count
@@ -2055,10 +2060,7 @@ class SaleOrderController extends Controller
 
         try {
 
-            $Sale_order = Sale_order::with('sale.user_pages')
-                ->get()
-                ->find($id);
-
+            $Sale_order = Sale_order::find($id);
             // return $Sale_order;
             // $Sale_order->date_time = $request->date_time;
             // $Sale_order->customer_id = $request->customer_id;
@@ -2069,7 +2071,7 @@ class SaleOrderController extends Controller
             $Sale_order->telephone = $request->telephone;
             // $Sale_order->email = $request->email;
             $Sale_order->address = $request->address;
-            // $Sale_order->shipping_price = $request->shipping_price;
+            $Sale_order->shipping_price = $request->shipping_price;
             // $Sale_order->cod_price_surcharge = $request->cod_price_surcharge;
             // $Sale_order->image_slip = $request->image_slip;
             // $Sale_order->bank_id = $request->bank_id;
@@ -2078,7 +2080,7 @@ class SaleOrderController extends Controller
             // $Sale_order->account_number = $request->account_number;
             // $Sale_order->main_discount = $request->main_discount;
             // $Sale_order->vat = $request->vat;
-            // $Sale_order->total += $Sale_order->shipping_price;
+            $Sale_order->total += $Sale_order->shipping_price;
             // $Sale_order->status = $request->status;
 
             // dd($Sale_order->status);
@@ -2156,20 +2158,6 @@ class SaleOrderController extends Controller
             // }
 
             DB::commit();
-
-            //ค้นหา page ที่
-            $page = User_page::where('page_id', $Sale_order->page_id)->first();
-
-            if ($page) {
-                //ส่งข้อความไปยืนยันกับลูกค้า
-                $this->_facebookApi->SendPrivateMessageToUser(
-                    $page->page_id,
-                    $page->token,
-                    $Sale_order->fb_user_id,
-                    'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
-                );
-            }
-
 
             return $this->returnSuccess('Successful operation', $Sale_order);
         } catch (\Throwable $e) {
