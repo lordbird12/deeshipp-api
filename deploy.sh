@@ -17,7 +17,7 @@ php artisan migrate --force
 php artisan optimize
 
 # Permission
-chmod -R 777 storage bootstrap/cache
+sudo chmod -R 777 storage bootstrap/cache
 
 # Reload PHP to update opcache
 echo "" | sudo -S service php8.1-fpm reload
