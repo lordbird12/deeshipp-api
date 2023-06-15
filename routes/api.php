@@ -413,6 +413,8 @@ Route::post('/line_bot', [SaleOrderController::class, 'lineBot']);
 
 Route::post('/order_from_live', [SaleOrderController::class, 'orderFromLive']);
 
+Route::put('/order_from_live/{id}', [SaleOrderController::class, 'updateOrderLive']);
+
  //product live
  Route::resource('product_live', ProductLiveController::class);
  Route::post('/product_live_page', [ProductLiveController::class, 'getPage']);
