@@ -2093,6 +2093,7 @@ class SaleOrderController extends Controller
         try {
 
             $Sale_order = Sale_order::with('sale.user_pages')
+                ->with('sale_order_lines.item')
                 ->get()
                 ->find($id);
 
@@ -2203,7 +2204,23 @@ class SaleOrderController extends Controller
                     $page->page_id,
                     $page->token,
                     $Sale_order->fb_user_id,
-                    'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
+                    'ยืนยันคำสั่งซื้อหมายเลข ' . $Sale_order->order_id,
+                );
+
+                $item_lines = $Sale_order->sale_order_lines;
+
+                $product = "";
+
+                foreach ($item_lines as $item) {
+                    $text = "- {$item->item->name} {$item->qty} ชิ้น ราคา {$item->total} บาท\n";
+                    $product .= $text;
+                }
+
+                $this->_facebookApi->SendPrivateMessageToUser(
+                    $page->page_id,
+                    $page->token,
+                    $Sale_order->fb_user_id,
+                    "คุณได้ทำการสั่งซื้อสินค้า ดังนี้\n{$product}ค่าจัดสั่ง {$Sale_order->shipping_price} บาท\nยอดสุทธิ {$Sale_order->total} บาท\n",
                 );
 
                 $this->_facebookApi->SendPrivateMessageToUser(
