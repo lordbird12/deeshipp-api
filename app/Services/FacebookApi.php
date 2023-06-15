@@ -40,7 +40,7 @@ class FacebookApi
     public function SendPrivateMessageToUser($pageId, $token, $id, $text)
     {
 
-        $url = "https://graph.facebook.com/" . $pageId . "/messages";
+        $url = "https://graph.facebook.com/v16.0/" . $pageId . "/messages";
 
         $recipient = new stdClass();
         $recipient->id = $id;

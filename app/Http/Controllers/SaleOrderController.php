@@ -1686,11 +1686,15 @@ class SaleOrderController extends Controller
         $ItemReal = ProductLive::where('code', $item_id)->first();
 
         if (!$ItemReal) {
-            return $this->returnErrorData('ไม่มีรหัสสินค้า ' . $item_id . ' ในระบบ', 404);
+            return $this->returnSuccess('ไม่มีรหัสสินค้า ' . $item_id . ' ในระบบ', null);
         }
 
         $Item = Item::find($ItemReal->item_id);
 
+        //Sale Shop
+        $page = User_page::where('user_id', $request->sale_id)
+            ->where('page_id', $request->page_id)
+            ->first();
 
         DB::beginTransaction();
 
@@ -1787,7 +1791,19 @@ class SaleOrderController extends Controller
 
                 DB::commit();
 
+                if ($page) {
+                    //ส่งลิงค์ sale page ไปยัง user
+                    $response = $this->_facebookApi->SendMessageFromLiveToUser(
+                        $Sale_order->page_id,
+                        $page->token,
+                        $Sale_order->fb_comment_id,
+                        "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
+                    );
 
+                    $Sale_order->fb_user_id = $response->recipient_id;
+                    $Sale_order->save();
+                    DB::commit();
+                }
 
                 return $this->returnSuccess('Successful operation', $Sale_order);
             } else {
@@ -1886,6 +1902,20 @@ class SaleOrderController extends Controller
                 $this->LogSaleOrder($userId, $description, $type);
 
                 DB::commit();
+
+                if ($page) {
+                    //ส่งลิงค์ sale page ไปยัง user
+                    $response = $this->_facebookApi->SendMessageFromLiveToUser(
+                        $Sale_order->page_id,
+                        $page->token,
+                        $Sale_order->fb_comment_id,
+                        "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
+                    );
+
+                    $Sale_order->fb_user_id = $response->recipient_id;
+                    $Sale_order->save();
+                    DB::commit();
+                }
 
                 return $this->returnSuccess('Successful operation', $Sale_order);
             }
@@ -2167,15 +2197,15 @@ class SaleOrderController extends Controller
             //ค้นหา page ที่
             $page = User_page::where('page_id', $Sale_order->page_id)->first();
 
-            // if ($page) {
+            if ($page) {
                 //ส่งข้อความไปยืนยันกับลูกค้า
-                // $this->_facebookApi->SendMessageFromLiveToUser(
-                //     $page->page_id,
-                //     $page->token,
-                //     $Sale_order->fb_comment_id,
-                //     'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
-                // );
-            // }
+                $this->_facebookApi->SendPrivateMessageToUser(
+                    $page->page_id,
+                    $page->token,
+                    $Sale_order->fb_user_id,
+                    'ยืนยันคำสั่งซื้อ ' . $Sale_order->order_id,
+                );
+            }
 
 
             return $this->returnSuccess('Successful operation', $Sale_order);
