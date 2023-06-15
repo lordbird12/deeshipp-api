@@ -1679,7 +1679,8 @@ class SaleOrderController extends Controller
         $ItemReal = ProductLive::where('code', $item_id)->first();
 
         if (!$ItemReal) {
-            return $this->returnErrorData('ไม่มีรหัสสินค้า ' . $item_id . ' ในระบบ', 404);
+            // return $this->returnErrorData('ไม่มีรหัสสินค้า ' . $item_id . ' ในระบบ', 404);
+            return $this->returnSuccess('Successful operation', null);
         }
 
         $Item = Item::find($ItemReal->item_id);
