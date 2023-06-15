@@ -1727,6 +1727,8 @@ class SaleOrderController extends Controller
                 $Sale_order->fb_user_id = $fb_user_id;
                 $Sale_order->fb_comment_id = $fb_comment_id;
 
+                $Sale_order->sale_id = $request->sale_id;
+
                 $Sale_order->create_by = "Live";
                 $Sale_order->save();
 
