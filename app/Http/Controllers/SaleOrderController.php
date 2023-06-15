@@ -230,6 +230,7 @@ class SaleOrderController extends Controller
             'main_discount',
             'vat',
             'total',
+            'track_no',
             'channal',
             'channal_remark',
             'payment_type',
