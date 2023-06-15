@@ -408,9 +408,9 @@ Route::group(['middleware' => 'checkjwt'], function () {
      Route::post('/user_bank_page', [UserBankController::class, 'UserBankPage']);
 
        //user page
-       Route::resource('user_page', UserPageController::class);
-       Route::post('/get_user_page', [UserPageController::class, 'getUserPage']);
-       Route::post('/user_page_page', [UserPageController::class, 'UserPagePage']);
+       Route::resource('users_page', UserPageController::class);
+       Route::post('/get_users_page', [UserPageController::class, 'getUserPage']);
+       Route::post('/users_page_page', [UserPageController::class, 'UserPagePage']);
 });
 
 Route::post('/line_bot', [SaleOrderController::class, 'lineBot']);
