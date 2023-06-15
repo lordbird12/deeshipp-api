@@ -165,6 +165,10 @@ Route::group(['middleware' => 'checkjwt'], function () {
     Route::post('/get_sale_order_approve_page', [SaleOrderController::class, 'getSaleOrderApprovePage']);
 
 
+    Route::post('/confirm_multi_order', [SaleOrderController::class, 'confirmMultiOrder']);
+    Route::post('/select_del_multi_order', [SaleOrderController::class, 'selectDelMultiOrder']);
+
+
 
     //postition
     Route::resource('position', PositionController::class);
