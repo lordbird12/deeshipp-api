@@ -2130,16 +2130,16 @@ class SaleOrderController extends Controller
             // only_item - เคส 2
             // only_delivery - เคส 1
 
-            if ($payment_step == 1 || $payment_step == "1") {
-                $Sale_order->status = "only_delivery";
-            } else if ($payment_step == 2 || $payment_step == "2") {
+            // if ($payment_step == 1 || $payment_step == "1") {
+            //     $Sale_order->status = "only_delivery";
+            // } else
+            if ($payment_step == 2 || $payment_step == "2" || $payment_step == 1 || $payment_step == "1") {
                 $Sale_order->status = "only_item";
             } else if ($payment_step == 3 || $payment_step == "3") {
                 $Sale_order->status = "paid";
             } else if ($payment_step == 4 || $payment_step == "4") {
                 $Sale_order->status = "confirm";
             }
-
 
             // $Sale_order->shipping_price = $request->shipping_price;
             // $Sale_order->cod_price_surcharge = $request->cod_price_surcharge;
