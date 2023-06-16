@@ -2220,7 +2220,7 @@ class SaleOrderController extends Controller
                     $page->page_id,
                     $page->token,
                     $Sale_order->fb_user_id,
-                    "คุณได้ทำการสั่งซื้อสินค้า ดังนี้\n{$product}ค่าจัดสั่ง {$Sale_order->shipping_price} บาท\nยอดสุทธิ {$Sale_order->total} บาท\n",
+                    "คุณได้ทำการสั่งซื้อสินค้า ดังนี้\n{$product}ค่าจัดส่ง {$Sale_order->shipping_price} บาท\nยอดสุทธิ {$Sale_order->total} บาท\n",
                 );
 
                 $this->_facebookApi->SendPrivateMessageToUser(
