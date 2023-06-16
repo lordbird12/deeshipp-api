@@ -742,7 +742,6 @@ class SaleOrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        dd();
         $Order = $request->order;
         $loginBy = $request->login_by;
 
@@ -1793,15 +1792,15 @@ class SaleOrderController extends Controller
 
                 if ($page) {
                     //ส่งลิงค์ sale page ไปยัง user
-                    $response = $this->_facebookApi->SendMessageFromLiveToUser(
+                    $resp = $this->_facebookApi->SendMessageFromLiveToUser(
                         $Sale_order->page_id,
                         $page->token,
                         $Sale_order->fb_comment_id,
                         "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
                     );
 
-                    $Sale_order->fb_user_id = $response->recipient_id;
-                    $Sale_order->save();
+                    $Sale_order->fb_user_id = $resp->recipient_id;
+                    dump($Sale_order->save());
                     DB::commit();
                 }
 
@@ -1905,15 +1904,15 @@ class SaleOrderController extends Controller
 
                 if ($page) {
                     //ส่งลิงค์ sale page ไปยัง user
-                    $response = $this->_facebookApi->SendMessageFromLiveToUser(
+                    $resp = $this->_facebookApi->SendMessageFromLiveToUser(
                         $Sale_order->page_id,
                         $page->token,
                         $Sale_order->fb_comment_id,
                         "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
                     );
 
-                    $Sale_order->fb_user_id = $response->recipient_id;
-                    $Sale_order->save();
+                    $Sale_order->fb_user_id = $resp->recipient_id;
+                    dump($Sale_order->save());
                     DB::commit();
                 }
 
