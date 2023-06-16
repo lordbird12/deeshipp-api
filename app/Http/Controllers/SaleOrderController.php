@@ -16,6 +16,7 @@ use App\Models\Sale_order;
 use App\Models\Sale_order_line;
 use App\Models\Unit_convertion;
 use App\Models\User;
+use App\Models\User_bank;
 use App\Models\User_page;
 use App\Services\FacebookApi;
 use Carbon\Carbon;
@@ -2076,6 +2077,13 @@ class SaleOrderController extends Controller
 
     public function updateOrderLive(Request $request, $id)
     {
+        $name = $request->name;
+        $telephone = $request->telephone;
+        $address = $request->address;
+        $payment_step = $request->payment_step;
+
+
+
         // $Order = $request->order;
         // $loginBy = $request->login_by;
 
@@ -2085,9 +2093,14 @@ class SaleOrderController extends Controller
         if (!isset($id)) {
             return $this->returnErrorData('[id] Data Not Found', 404);
         }
-        // else if (!isset($loginBy)) {
-        //     return $this->returnErrorData('[login_by] Data Not Found', 404);
-        // }
+        if (!isset($name))
+            return $this->returnErrorData('กรุณาระบุชื่อ', 404);
+        if (!isset($telephone))
+            return $this->returnErrorData('[กรุณาระบุหลายเลขโทรศัพท์', 404);
+        if (!isset($address))
+            return $this->returnErrorData('กรุณาระบุที่อยู่', 404);
+        if (!isset($payment_step))
+            return $this->returnErrorData('กรุณาเลือกวิธีการชำระเงิน', 404);
 
         DB::beginTransaction();
 
@@ -2104,10 +2117,30 @@ class SaleOrderController extends Controller
             // $Sale_order->delivery_by_id = $request->delivery_by_id;
             // $Sale_order->channal = $request->channal;
             // $Sale_order->sale_id = $request->sale_id;
-            $Sale_order->name = $request->name;
-            $Sale_order->telephone = $request->telephone;
+            $Sale_order->name = $name;
+            $Sale_order->telephone = $telephone;
             // $Sale_order->email = $request->email;
-            $Sale_order->address = $request->address;
+            $Sale_order->address = $address;
+
+            $Sale_order->address = $address;
+
+            // order - สร้าง
+            // confirm - เคส 4
+            // paid - เคส 3
+            // only_item - เคส 2
+            // only_delivery - เคส 1
+
+            if ($payment_step == 1 || $payment_step == "1") {
+                $Sale_order->status = "only_delivery";
+            } else if ($payment_step == 2 || $payment_step == "2") {
+                $Sale_order->status = "only_item";
+            } else if ($payment_step == 3 || $payment_step == "3") {
+                $Sale_order->status = "paid";
+            } else if ($payment_step == 4 || $payment_step == "4") {
+                $Sale_order->status = "confirm";
+            }
+
+
             // $Sale_order->shipping_price = $request->shipping_price;
             // $Sale_order->cod_price_surcharge = $request->cod_price_surcharge;
             // $Sale_order->image_slip = $request->image_slip;
@@ -2199,6 +2232,8 @@ class SaleOrderController extends Controller
             //ค้นหา page ที่
             $page = User_page::where('page_id', $Sale_order->page_id)->first();
 
+            $bank = User_bank::where('user_id', $Sale_order->sale_id)->with('bank')->first();
+
             if ($page) {
                 //ส่งข้อความไปยืนยันกับลูกค้า
                 $this->_facebookApi->SendPrivateMessageToUser(
@@ -2230,6 +2265,15 @@ class SaleOrderController extends Controller
                     $Sale_order->fb_user_id,
                     "ที่อยู่จัดส่ง\nชื่อ {$Sale_order->name}\nโทร {$Sale_order->telephone}\nที่อยู่ {$Sale_order->address}",
                 );
+
+                if ($bank) {
+                    $this->_facebookApi->SendPrivateMessageToUser(
+                        $page->page_id,
+                        $page->token,
+                        $Sale_order->fb_user_id,
+                        "เลขที่บัญชี: {$bank->account_number}\nชื่อบัญชี: {$bank->first_name} {$bank->last_name}\nธนาคาร: {$bank->bank->name}",
+                    );
+                }
             }
 
 

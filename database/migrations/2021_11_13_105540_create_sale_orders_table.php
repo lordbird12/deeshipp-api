@@ -46,25 +46,25 @@ class CreateSaleOrdersTable extends Migration
 
 
 
-            $table->enum('channal', ['facebook', 'line','tiktok','other','SP'])->charset('utf8')->default('facebook');
+            $table->enum('channal', ['facebook', 'line', 'tiktok', 'other', 'SP'])->charset('utf8')->default('facebook');
             $table->string('channal_remark')->charset('utf8')->nullable();
 
             $table->enum('payment_type', ['transfer', 'COD'])->charset('utf8')->default('transfer');
 
-            $table->enum('status', ['order','paid','confirm','packing','delivery','finish','failed'])->charset('utf8')->default('order');
+            $table->enum('status', ['order', 'paid', 'confirm', 'packing', 'delivery', 'finish', 'failed', 'only_item', 'only_delivery'])->charset('utf8')->default('order');
 
-             //transfer
+            //transfer
 
-             $table->string('image_slip',255)->charset('utf8')->nullable();
+            $table->string('image_slip', 255)->charset('utf8')->nullable();
 
-             $table->dateTime('payment_date')->nullable();
-             $table->integer('bank_id')->unsigned()->index()->nullable();
-             $table->foreign('bank_id')->references('id')->on('banks')->onDelete('cascade');
+            $table->dateTime('payment_date')->nullable();
+            $table->integer('bank_id')->unsigned()->index()->nullable();
+            $table->foreign('bank_id')->references('id')->on('banks')->onDelete('cascade');
 
 
 
-             $table->double('payment_qty', 10, 2)->default(0.00)->nullable();
-             $table->string('account_number')->charset('utf8')->nullable();
+            $table->double('payment_qty', 10, 2)->default(0.00)->nullable();
+            $table->string('account_number')->charset('utf8')->nullable();
 
             $table->string('create_by', 100)->charset('utf8')->nullable();
             $table->string('update_by', 100)->charset('utf8')->nullable();
