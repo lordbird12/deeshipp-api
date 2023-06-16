@@ -1796,7 +1796,7 @@ class SaleOrderController extends Controller
                         $Sale_order->page_id,
                         $page->token,
                         $Sale_order->fb_comment_id,
-                        "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
+                        "กรุณาตรวจสอบข้อมูลคำสั่งซื้อ\n\nhttps://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
                     );
 
                     $so = Sale_order::find($Sale_order->id);
