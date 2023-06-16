@@ -1799,8 +1799,9 @@ class SaleOrderController extends Controller
                         "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
                     );
 
-                    $Sale_order->fb_user_id = $resp->recipient_id;
-                    dump($Sale_order->save());
+                    $so = Sale_order::find($Sale_order->id);
+                    $so->fb_user_id = $resp->recipient_id;
+                    $so->save();
                     DB::commit();
                 }
 
@@ -1911,8 +1912,9 @@ class SaleOrderController extends Controller
                         "https://deeshipp.vercel.app/sale-page?order_id=" . $Sale_order->id
                     );
 
-                    $Sale_order->fb_user_id = $resp->recipient_id;
-                    dump($Sale_order->save());
+                    $so = Sale_order::find($Sale_order->id);
+                    $so->fb_user_id = $resp->recipient_id;
+                    $so->save();
                     DB::commit();
                 }
 
