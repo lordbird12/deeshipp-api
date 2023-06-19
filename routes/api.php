@@ -167,6 +167,9 @@ Route::group(['middleware' => 'checkjwt'], function () {
 
     Route::post('/confirm_multi_order', [SaleOrderController::class, 'confirmMultiOrder']);
     Route::post('/select_del_multi_order', [SaleOrderController::class, 'selectDelMultiOrder']);
+    Route::post('/confirm_order_by_code', [SaleOrderController::class, 'confirmOrderByCode']);
+
+
 
 
 
