@@ -309,6 +309,9 @@ Route::group(['middleware' => 'checkjwt'], function () {
     Route::post('/get_user_payroll_page', [UserController::class, 'getUserPayroll']);
 
 
+    Route::post('/user_transection', [UserController::class, 'userTransection']);
+
+
     //item_lot
     Route::get('/get_item_lot', [ItemLotController::class, 'getItemLot']);
     Route::resource('item_lot', ItemLotController::class);
@@ -434,6 +437,11 @@ Route::get('/get_order_live_by_id/{id}', [SaleOrderController::class, 'getOrderL
 
 //อัปเดตการชำระเงินลูกค้า
 Route::put('/payment_order_cm/{id}', [SaleOrderController::class, 'PaymentOrderCM']);
+
+//calback payment
+Route::get('/callback_user_transection', [UserController::class, 'callbackUserTransection']);
+
+
 
 
 

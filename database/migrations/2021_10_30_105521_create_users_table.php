@@ -34,6 +34,8 @@ class CreateUsersTable extends Migration
             $table->string('shop_name', 255)->charset('utf8');
             $table->string('shop_address', 255)->charset('utf8');
 
+            $table->double('wallet', 10, 2)->default(0.00);
+
             //$table->enum('status', ['Yes', 'No', 'Request'])->charset('utf8')->default('No');
             $table->boolean('status')->default(1);
 

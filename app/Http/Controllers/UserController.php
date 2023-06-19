@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\DeductPaid;
 use App\Models\Employee_salary;
 use App\Models\IncomePaid;
+use App\Models\Order;
+use App\Models\Transection;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Http;
 
 class UserController extends Controller
 {
@@ -42,15 +45,15 @@ class UserController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
-         //check user
-         $loginBy = $request->login_by;
+        //check user
+        $loginBy = $request->login_by;
 
-         if ($loginBy->permission->id == 1) {
-             $userId = null;
-         } else {
-             $userId = $loginBy->id;
-         }
-         //
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else {
+            $userId = $loginBy->id;
+        }
+        //
 
         $Status = $request->status;
 
@@ -937,5 +940,198 @@ class UserController extends Controller
         }
 
         return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $d);
+    }
+
+
+    public function userTransection(Request $request)
+    {
+        $loginBy = $request->login_by;
+        $qty = $request->qty;
+
+        if (!isset($qty)) {
+            return $this->returnErrorData('กรุณาระบุจำนวนเงิน', 404);
+        } else if (!isset($loginBy)) {
+            return $this->returnErrorData('ไม่พบข้อมูลเจ้าหน้าที่ กรุณาเข้าสู่ระบบใหม่อีกครั้ง', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            //     $response = Http::withHeaders([
+            //         'Content-Type' => 'application/json; charset=utf-8',
+            //         'Authorization' => 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwb2xpY2UiLCJhdWQiOjEsImx1biI6eyJpZCI6MSwicGVybWlzc2lvbl9pZCI6MSwidXNlcl9yZWZfaWQiOm51bGwsInVzZXJfaWQiOiIwMDAwMSIsImZpcnN0X25hbWUiOiJcdTBlMWJcdTBlMjdcdTBlMzRcdTBlMGFcdTBlMGRcdTBlMzIiLCJsYXN0X25hbWUiOiJcdTBlMTlcdTBlMzFcdTBlMTlcdTBlMTdcdTBlMWVcdTBlMzRcdTBlMjdcdTBlMzFcdTBlMTJcdTBlMTlcdTBlNGMiLCJlbWFpbCI6IkFkbWluMkBnbWFpbC5jb20iLCJpbWFnZSI6Imh0dHA6XC9cL2xvY2FsaG9zdFwvYXNoYVwvZGVzaGlwXC9kZWVzaGlwcC1hcGlcL3B1YmxpY1wvaW1hZ2VzXC91c2Vyc1wvMzU1OGM2Yzg3ZDFmNDRkMzVjYmE5YjJiZDFhMTVmY2YuanBnIiwidGVsIjpudWxsLCJ0ZWwyIjpudWxsLCJzaG9wX25hbWUiOm51bGwsInNob3BfYWRkcmVzcyI6bnVsbCwid2FsbGV0IjoiMC4wMCIsInN0YXR1cyI6MSwiY3JlYXRlX2J5IjoiMDAwMDEiLCJ1cGRhdGVfYnkiOiIwMDAwMSIsImNyZWF0ZWRfYXQiOiIxOVwvMTBcLzIwMjIgMTI6MzE6NDQiLCJ1cGRhdGVkX2F0IjoiMTVcLzA2XC8yMDIzIDE5OjUxOjE0IiwicGVybWlzc2lvbiI6eyJpZCI6MSwibmFtZSI6Ilx1MGU0MFx1MGUwOFx1MGU0OVx1MGUzMlx1MGUwMlx1MGUyZFx1MGUwN1x1MGU0MVx1MGUxZVx1MGUyNVx1MGUxNVx1MGUxZlx1MGUyZFx1MGUyM1x1MGU0Y1x1MGUyMSIsInN0YXR1cyI6MSwiY3JlYXRlX2J5IjoiMDAwMDciLCJ1cGRhdGVfYnkiOiIwMDAwMSIsImNyZWF0ZWRfYXQiOiIxOVwvMTBcLzIwMjIgMTI6MTM6MjgiLCJ1cGRhdGVkX2F0IjoiMTRcLzA2XC8yMDIzIDE1OjAyOjExIn0sInVzZXJfcmVmIjpudWxsfSwiaWF0IjoxNjg3MTYzOTYxLCJleHAiOjE2ODcyNTAzNjEsIm5iZiI6MTY4NzE2Mzk2MX0.gCtwkXYXzXQZiEuaS6aRt5vB3NFovBRkCQVsdfn8mnE',
+            //     ])->get('http://localhost/asha/deship/deeshipp-api/public/api/get_user'
+            // );
+
+            //     return $response->json();
+            ////////////
+
+            $emv_qrcode = null;
+            $randomTransection = strval(rand(100000000000, 999999999999));
+
+            // $accessToken = $this->getTokenAPIPayment();
+
+            // $body = [
+            //     'requestId' => $randomTransection,
+            //     'partnerId' => "MIXAY",
+            //     'mechantId' => "G9OV179BERQ2P9LBI9IJQUM3O",
+            //     'txnAmount' => $qty,
+            //     'billNumber' => "DS" . $randomTransection,
+            //     'terminalId' => $loginBy->id,
+            //     'terminalLabel' => $loginBy->user_id,
+            //     'mobileNo' => "0",
+            // ];
+
+            // $key = '4C/xiGWUAB2G0+xGbKq9ECvEHAnrRbMd68Wp+pigzCwKpfNeU/Vr8USJvQbdlZGYnfL3CWe1xUB+AOeEl62WPh3sW/fJ6lGl2xOS0pXu6uzbj5yJRymfFbnlvg99nlx1';
+
+            // $hash = hash_hmac('sha256', json_encode($body), $key);
+
+            // $response = Http::withHeaders([
+            //     'Content-Type' => 'application/json; charset=utf-8',
+            //     'SignedHash' => strval($hash),
+            //     'Authorization' => 'Bearer ' + $accessToken,
+            // ])->post('https://dynamicqr.jdbbank.com.la:12014/api/pro/dynamic/autenticate', $body);
+
+            // $data = $response->json();
+            // $emv_qrcode = $data->data->emv;
+
+            //add order
+            $order = new Order();
+            $order->user_id =  $loginBy->id;
+            $order->code =  'OR' . $randomTransection;
+            $order->date =  date('Y-m-d');
+            $order->time =  date('H:i:s');
+            $order->type =  'deposit';
+            $order->qty =  1;
+            $order->price =  $qty;
+            $order->discount =  0.00;
+            $order->total =  $qty;
+            $order->status = false;
+            $order->payment = false;
+            $order->remark = null;
+            $order->save();
+            //
+
+            //add trans
+
+            //get user wallet
+            $getUser =  User::find($loginBy->id);
+            if ($getUser) {
+                $wallet =  $getUser->wallet;
+            } else {
+                $wallet = 0.00;
+            }
+            //
+
+            $Transection = new Transection();
+            $Transection->user_id =  $loginBy->id;
+            $Transection->order_id =  $order->id;
+            $Transection->date =  date('Y-m-d');
+            $Transection->time =  date('H:i:s');
+            $Transection->refNo =  $randomTransection;
+            $Transection->merchantId =  "G9OV179BERQ2P9LBI9IJQUM3O";
+            $Transection->cardtype =  'qrcode';
+            $Transection->cc =  'qrcode';
+            $Transection->qrcode =  $emv_qrcode;
+            $Transection->price =   $qty;
+            $Transection->fee =  0.00;
+            $Transection->total =   $qty;
+            $Transection->pre_wallet = $wallet;
+
+            $Transection->new_wallet = $wallet + $qty;
+            $Transection->type =   'deposit';
+
+            $Transection->status = false;
+
+            $Transection->remark = null;
+            $Transection->save();
+            $Transection->order;
+            $Transection->user;
+            //
+
+            DB::commit();
+
+            return $this->returnSuccess('ดำเนินการสำเร็จ', ['data' => $Transection, 'emv_qrcode' => $emv_qrcode]);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ', 404);
+        }
+    }
+
+    public function callbackUserTransection(Request $request)
+    {
+
+        $refNo =  $request->ref_no;
+
+        DB::beginTransaction();
+
+        try {
+
+            $Transection = Transection::with('user')
+                ->with('order')
+                ->where('refNo', $refNo)
+                ->where('status', false)
+                ->first();
+
+            if ($Transection) {
+
+                //update trans status
+                $Transection->status = true;
+                $Transection->save();
+
+                //update order
+                $getOrder =  Order::find($Transection->order_id);
+                $getOrder->status = true;
+                $getOrder->payment = true;
+                $getOrder->save();
+
+
+                //get user wallet
+                $getUser =  User::find($Transection->user_id);
+                $getUser->wallet = $getUser->wallet + $Transection->total;
+                $getUser->save();
+                //
+
+            }
+            DB::commit();
+
+            return $this->returnSuccess('ดำเนินการสำเร็จ', null);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ', 404);
+        }
+    }
+
+    public function getTokenAPIPayment()
+    {
+
+        try {
+
+            $body = [
+                'requestId' => strval(rand(100000000000, 999999999999)),
+                'partnerId' => "MIXAY",
+                'clientId' => "MIXAY",
+                'clientScret' => "KTU8KQ1KDAI7RE4ML5KDHEOQKYV7Y84TIP9S0DZ41LX10F4UO33C0SF5SQFJZ6EV0SZSR3QNRHEITTL92ZJZ1KZBGPBZJE02EWTS",
+            ];
+
+            $key = '4C/xiGWUAB2G0+xGbKq9ECvEHAnrRbMd68Wp+pigzCwKpfNeU/Vr8USJvQbdlZGYnfL3CWe1xUB+AOeEl62WPh3sW/fJ6lGl2xOS0pXu6uzbj5yJRymfFbnlvg99nlx1';
+
+            $hash = hash_hmac('sha256', json_encode($body), $key);
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json; charset=utf-8',
+                'SignedHash' => strval($hash),
+            ])->post('https://dynamicqr.jdbbank.com.la:12014/api/pro/dynamic/autenticate', $body);
+
+            $data = $response->json();
+            return $data->data->accessToken;
+        } catch (\Throwable $e) {
+            return $e;
+        }
     }
 }
