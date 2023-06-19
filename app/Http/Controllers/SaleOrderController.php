@@ -2096,7 +2096,7 @@ class SaleOrderController extends Controller
         try {
 
             //update sale order
-            $Sale_order = Sale_order::find($saleOrderCode);
+            $Sale_order = Sale_order::where('order_id',$saleOrderCode)->first();
             $Sale_order->status = $status;
 
             $Sale_order->update_by = $loginBy->user_id;

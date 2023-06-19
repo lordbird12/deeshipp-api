@@ -27,6 +27,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LotTransController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProductController;
@@ -47,6 +48,7 @@ use App\Http\Controllers\WorkingTimeController;
 use App\Http\Controllers\WorkTelesaleController;
 use App\Http\Controllers\WorkTimeController;
 use App\Http\Controllers\ProductLiveController;
+use App\Http\Controllers\TransectionController;
 use App\Http\Controllers\UserBankController;
 use App\Http\Controllers\UserPageController;
 use Illuminate\Support\Facades\Route;
@@ -417,6 +419,13 @@ Route::group(['middleware' => 'checkjwt'], function () {
        Route::resource('users_page', UserPageController::class);
        Route::post('/get_users_page', [UserPageController::class, 'getUserPage']);
        Route::post('/users_page_page', [UserPageController::class, 'UserPagePage']);
+
+       //Transection
+       Route::post('/transection_page', [TransectionController::class, 'Page']);
+
+        //order
+        Route::post('/order_page', [OrderController::class, 'Page']);
+
 });
 
 Route::post('/line_bot', [SaleOrderController::class, 'lineBot']);
