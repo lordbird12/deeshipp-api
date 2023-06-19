@@ -2075,6 +2075,46 @@ class SaleOrderController extends Controller
         }
     }
 
+    public function confirmOrderByCode(Request $request)
+    {
+
+        $saleOrderCode = $request->sale_order_code;
+        $status = $request->status;
+
+        $loginBy = $request->login_by;
+
+        if (empty($saleOrderCode)) {
+            return $this->returnErrorData('กรุณาระบุ รายการออเดอร์', 404);
+        } else if (!isset($status)) {
+            return $this->returnErrorData('กรุณาระบุสถานะ', 404);
+        } else if (!isset($loginBy)) {
+            return $this->returnErrorData('กรุณาเข้าสู่ระบบ', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            //update sale order
+            $Sale_order = Sale_order::find($saleOrderCode);
+            $Sale_order->status = $status;
+
+            $Sale_order->update_by = $loginBy->user_id;
+            $Sale_order->updated_at = Carbon::now()->toDateTimeString();
+
+            $Sale_order->save();
+
+            DB::commit();
+
+            return $this->returnSuccess('Successful operation', []);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+        }
+    }
+
     public function updateOrderLive(Request $request, $id)
     {
         $name = $request->name;
