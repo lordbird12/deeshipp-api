@@ -2120,7 +2120,7 @@ class SaleOrderController extends Controller
         $name = $request->name;
         $telephone = $request->telephone;
         $address = $request->address;
-        $payment_step = $request->payment_step;
+        $payment_type = $request->payment_type;
 
 
 
@@ -2139,7 +2139,7 @@ class SaleOrderController extends Controller
             return $this->returnErrorData('[กรุณาระบุหลายเลขโทรศัพท์', 404);
         if (!isset($address))
             return $this->returnErrorData('กรุณาระบุที่อยู่', 404);
-        if (!isset($payment_step))
+        if (!isset($payment_type))
             return $this->returnErrorData('กรุณาเลือกวิธีการชำระเงิน', 404);
 
         DB::beginTransaction();
@@ -2170,14 +2170,22 @@ class SaleOrderController extends Controller
             // only_item - เคส 2
             // only_delivery - เคส 1
 
-            // if ($payment_step == 1 || $payment_step == "1") {
+            // if ($payment_type == 1 || $payment_type == "1") {
             //     $Sale_order->status = "only_delivery";
             // } else
-            if ($payment_step == 2 || $payment_step == "2" || $payment_step == 1 || $payment_step == "1") {
+            if ($payment_type == "2" || $payment_type == "2" || $payment_type == 1 || $payment_type == "1") {
                 $Sale_order->status = "only_item";
-            } else if ($payment_step == 3 || $payment_step == "3") {
+            } else if ($payment_type == 3 || $payment_type == "3") {
                 $Sale_order->status = "paid";
-            } else if ($payment_step == 4 || $payment_step == "4") {
+            } else if ($payment_type == 4 || $payment_type == "4") {
+                $Sale_order->status = "confirm";
+            }
+
+            if ($payment_type == "pay_only_item" || $payment_type == "pay_only_del") {
+                $Sale_order->status = "only_item";
+            } else if ($payment_type == "pay_all") {
+                $Sale_order->status = "paid";
+            } else if ($payment_type == "not_pay") {
                 $Sale_order->status = "confirm";
             }
 
@@ -2194,7 +2202,7 @@ class SaleOrderController extends Controller
             // $Sale_order->status = $request->status;
 
             // dd($Sale_order->status);
-            // $Sale_order->payment_type = $request->payment_type;
+            $Sale_order->payment_type = $payment_type;
 
             // //sent noti change delivery date
             // if ($request->shipping_date != $Sale_order->original_shipping_date) {
