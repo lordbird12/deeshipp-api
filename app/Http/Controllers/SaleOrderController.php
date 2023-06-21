@@ -2173,13 +2173,13 @@ class SaleOrderController extends Controller
             // if ($payment_type == 1 || $payment_type == "1") {
             //     $Sale_order->status = "only_delivery";
             // } else
-            if ($payment_type == "2" || $payment_type == "2" || $payment_type == 1 || $payment_type == "1") {
-                $Sale_order->status = "only_item";
-            } else if ($payment_type == 3 || $payment_type == "3") {
-                $Sale_order->status = "paid";
-            } else if ($payment_type == 4 || $payment_type == "4") {
-                $Sale_order->status = "confirm";
-            }
+            // if ($payment_type == "2" || $payment_type == "2" || $payment_type == 1 || $payment_type == "1") {
+            //     $Sale_order->status = "only_item";
+            // } else if ($payment_type == 3 || $payment_type == "3") {
+            //     $Sale_order->status = "paid";
+            // } else if ($payment_type == 4 || $payment_type == "4") {
+            //     $Sale_order->status = "confirm";
+            // }
 
             if ($payment_type == "pay_only_item" || $payment_type == "pay_only_del") {
                 $Sale_order->status = "only_item";
