@@ -27,7 +27,7 @@ class Delivered_by extends Model
         return $this->belongsTo(User::class,'create_by','user_id');
     }
 
-    public  function user()
+    public  function users()
     {
         return $this->hasMany(User::class);
     }
