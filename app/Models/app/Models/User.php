@@ -51,6 +51,11 @@ class User extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function Delivered_by()
+    {
+        return $this->hasOne(Delivered_by::class);
+    }
     
     public  function user_create ()
     {

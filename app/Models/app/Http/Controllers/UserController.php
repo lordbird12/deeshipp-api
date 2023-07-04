@@ -443,6 +443,7 @@ class UserController extends Controller
              ->with('department')
              ->with('position')
              ->with('branch')
+             ->with('Delivered_by')
             // ->with('position')
             // ->with('prefix_type')
             // ->with('prefix')
