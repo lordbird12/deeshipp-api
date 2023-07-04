@@ -2096,7 +2096,7 @@ class SaleOrderController extends Controller
         try {
 
             //update sale order
-            $Sale_order = Sale_order::where('order_id',$saleOrderCode)->first();
+            $Sale_order = Sale_order::where('order_id', $saleOrderCode)->first();
             $Sale_order->status = $status;
 
             $Sale_order->update_by = $loginBy->user_id;
@@ -2182,16 +2182,32 @@ class SaleOrderController extends Controller
             // }
 
             if ($payment_type == "pay_only_item" || $payment_type == "pay_only_del") {
+
+                if ($payment_type == "pay_only_item") {
+                    $payqty =  $Sale_order->total;
+                } else if ($payment_type == "pay_only_del") {
+                    $Sale_order->shipping_price = $Sale_order->sale->delivered_fee != null ? $Sale_order->sale->delivered_fee : 0.00;
+                    $payqty =   $Sale_order->shipping_price;
+                }
+
                 $Sale_order->status = "only_item";
+                $Sale_order->bank_id = $request->bank_id;
+                $Sale_order->payment_date = date('Y-m-d');
+                $Sale_order->payment_qty =  $payqty;
+                $Sale_order->image_slip = $request->image_slip;
             } else if ($payment_type == "pay_all") {
                 $Sale_order->status = "paid";
+                $Sale_order->shipping_price = $Sale_order->sale->delivered_fee != null ? $Sale_order->sale->delivered_fee : 0.00;
+                $Sale_order->bank_id = $request->bank_id;
+                $Sale_order->payment_date = date('Y-m-d');
+                $Sale_order->payment_qty =  $Sale_order->total + $Sale_order->shipping_price;
+                $Sale_order->image_slip = $request->image_slip;
             } else if ($payment_type == "not_pay") {
                 $Sale_order->status = "confirm";
             }
 
-            // $Sale_order->shipping_price = $request->shipping_price;
             // $Sale_order->cod_price_surcharge = $request->cod_price_surcharge;
-            // $Sale_order->image_slip = $request->image_slip;
+
             // $Sale_order->bank_id = $request->bank_id;
             // $Sale_order->payment_date = $request->payment_date;
             // $Sale_order->payment_qty = $request->payment_qty;
