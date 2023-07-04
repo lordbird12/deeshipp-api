@@ -78,5 +78,11 @@ class User extends Model
         return $this->hasMany(Transection::class);
     }
 
+    public function delivered_by()
+    {
+        return $this->belongsTo(Delivered_by::class);
+    }
+
+
 
 }

@@ -49,6 +49,7 @@ use App\Http\Controllers\WorkTelesaleController;
 use App\Http\Controllers\WorkTimeController;
 use App\Http\Controllers\ProductLiveController;
 use App\Http\Controllers\TransectionController;
+use App\Http\Controllers\UserAddressSentController;
 use App\Http\Controllers\UserBankController;
 use App\Http\Controllers\UserPageController;
 use Illuminate\Support\Facades\Route;
@@ -313,6 +314,8 @@ Route::group(['middleware' => 'checkjwt'], function () {
     Route::get('/get_last_user_id', [UserController::class, 'getLastUserID']);
     Route::post('/get_user_payroll_page', [UserController::class, 'getUserPayroll']);
 
+    Route::post('/update_delivery_user', [UserController::class, 'updateDeliveryUser']);
+
 
     Route::post('/user_transection', [UserController::class, 'userTransection']);
 
@@ -419,6 +422,11 @@ Route::group(['middleware' => 'checkjwt'], function () {
        Route::resource('users_page', UserPageController::class);
        Route::post('/get_users_page', [UserPageController::class, 'getUserPage']);
        Route::post('/users_page_page', [UserPageController::class, 'UserPagePage']);
+
+        //user address send
+        Route::resource('user_address_sent', UserAddressSentController::class);
+        Route::post('/get_user_address_sent', [UserAddressSentController::class, 'getUserAddressSent']);
+        Route::post('/user_address_sent_page', [UserAddressSentController::class, 'UserAddressSentPage']);
 
        //Transection
        Route::post('/transection_page', [TransectionController::class, 'Page']);

@@ -2162,7 +2162,7 @@ class SaleOrderController extends Controller
             // $Sale_order->email = $request->email;
             $Sale_order->address = $address;
 
-            $Sale_order->address = $address;
+            // $Sale_order->address = $address;
 
             // order - สร้าง
             // confirm - เคส 4

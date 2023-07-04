@@ -19,8 +19,8 @@ class CreateUsersTable extends Migration
             $table->integer('permission_id')->nullable()->unsigned()->index();
             $table->foreign('permission_id')->references('id')->on('permission')->onDelete('cascade');
 
-           $table->integer('user_ref_id')->nullable()->unsigned()->index();
-           $table->foreign('user_ref_id')->references('id')->on('user')->onDelete('cascade');
+            $table->integer('user_ref_id')->nullable()->unsigned()->index();
+            $table->foreign('user_ref_id')->references('id')->on('user')->onDelete('cascade');
 
             $table->string('user_id', 50)->unique()->charset('utf8');
             $table->string('password', 100)->charset('utf8')->nullable();
@@ -36,6 +36,13 @@ class CreateUsersTable extends Migration
 
             $table->double('wallet', 10, 2)->default(0.00);
 
+
+            $table->integer('delivered_by_id')->nullable()->unsigned()->index();
+            $table->foreign('delivered_by_id')->references('id')->on('delivered_by')->onDelete('cascade');
+            $table->double('delivered_fee', 10, 2)->default(0.00);
+
+
+
             //$table->enum('status', ['Yes', 'No', 'Request'])->charset('utf8')->default('No');
             $table->boolean('status')->default(1);
 
@@ -45,7 +52,6 @@ class CreateUsersTable extends Migration
 
             $table->timestamps();
             $table->softDeletes();
-
         });
     }
 

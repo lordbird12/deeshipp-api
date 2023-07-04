@@ -223,6 +223,7 @@ class UserController extends Controller
         $User = User::with('permission')
             ->with('user_ref')
             ->with('user_create')
+            ->with('delivered_by')
             ->where('id', $id)
             ->first();
 
@@ -1132,6 +1133,52 @@ class UserController extends Controller
             return $data->data->accessToken;
         } catch (\Throwable $e) {
             return $e;
+        }
+    }
+
+
+    public function updateDeliveryUser(Request $request)
+    {
+
+        $deliveredById = $request->delivered_by_id;
+        $deliveredFee = $request->delivered_fee;
+
+        $loginBy = $request->login_by;
+
+        if (!isset($deliveredById)) {
+            return $this->returnErrorData('กรุณาระบุรหัสขนส่งให้เรียบร้อย', 404);
+        } else if (!isset($deliveredFee)) {
+            return $this->returnErrorData('กรุณาระบุจำนวนค่าขนส่งที่ต้องการให้เรียบร้อย', 404);
+        } else if (!isset($loginBy)) {
+            return $this->returnErrorData('ไม่พบข้อมูลเจ้าหน้าที่ กรุณาเข้าสู่ระบบใหม่อีกครั้ง', 404);
+        }
+
+
+        DB::beginTransaction();
+
+        try {
+
+            $User = User::find($loginBy->id);
+            $User->delivered_by_id = $deliveredById;
+            $User->delivered_fee = $deliveredFee;
+
+            $User->save();
+
+            //log
+            $userId = $loginBy->user_id;
+            $type = 'แก้ไขช่องขนส่ง';
+            $description = 'เจ้าหน้าที่ ' . $userId . ' ได้ทำการ ' . $type . ' ของ ' . $User->user_id;
+            $this->Log($userId, $description, $type);
+            //
+
+            DB::commit();
+
+            return $this->returnSuccess('ดำเนินการสำเร็จ', $User);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ', 404);
         }
     }
 }
