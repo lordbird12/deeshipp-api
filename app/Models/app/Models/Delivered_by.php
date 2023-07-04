@@ -29,6 +29,6 @@ class Delivered_by extends Model
 
     public  function user()
     {
-        return $this->belongsTo(Delivered_by::class);
+        return $this->hasOne(User::class);
     }
 }

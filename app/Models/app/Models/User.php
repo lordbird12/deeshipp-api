@@ -54,7 +54,7 @@ class User extends Model
 
     public function delivered_by()
     {
-        return $this->hasOne(Delivered_by::class, 'delivered_by_id');
+        return $this->belongsTo(Delivered_by::class, 'delivered_by_id');
     }
     
     public  function user_create ()
