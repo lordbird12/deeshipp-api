@@ -14,7 +14,7 @@ class Delivered_byController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-   
+
     public function show($id)
     {
 
@@ -22,18 +22,14 @@ class Delivered_byController extends Controller
             return $this->returnErrorData('[id] Data Not Found', 404);
         }
 
-        $Channel = Delivered_by:: 
+        $Delivered_by = Delivered_by::find($id);
 
-           // ->with('location')
+        return $this->returnSuccess('Successful', $Delivered_by);
 
-            find($id);
-
-        return $this->returnSuccess('Successful', $Channel);
-    
 
     }
 
-     
+
     public function deliveryPage(Request $request)
     {
 
@@ -71,6 +67,8 @@ class Delivered_byController extends Controller
                 $No = $No + 1;
                 $d[$i]->No = $No;
 
+                $d[$i]->fee = 15.00; //รอ get  จากขนส่ง
+
             }
 
         }
@@ -78,11 +76,11 @@ class Delivered_byController extends Controller
         return $this->returnSuccess('Successful', $d);
     }
 
-   
-   
+
+
      public function updateDeliver (Request $request)
     {
-       
+
         $loginBy = $request->login_by;
 
         if (!isset($request->id)) {
@@ -98,7 +96,7 @@ class Delivered_byController extends Controller
             $id = $request->id;
             $Delivered_by = Delivered_by::find($id);
 
-            
+
 
             $Delivered_by->name = $request->name;
 
@@ -107,7 +105,7 @@ class Delivered_byController extends Controller
             if ($request->image && $request->image != null && $request->image != 'null') {
                 $Delivered_by->image = $this->uploadImage($request->image, '/images/Delivered_by/');
             }
-            
+
             $Delivered_by->update_by = $loginBy->user_id;
             $Delivered_by->updated_at = Carbon::now()->toDateTimeString();
             $Delivered_by->save();
@@ -142,13 +140,15 @@ class Delivered_byController extends Controller
 
     public function getDeliveredBy()
     {
-       
+
         $Delivered_by = Delivered_by::where('status', 1)->get()->toarray();
 
         if (!empty($Delivered_by)) {
 
             for ($i = 0; $i < count($Delivered_by); $i++) {
                 $Delivered_by[$i]['No'] = $i + 1;
+
+                $Delivered_by[$i]['fee'] = 15.00; //รอ get  จากขนส่ง
 
             }
         }
@@ -158,7 +158,7 @@ class Delivered_byController extends Controller
     public function store(Request $request)
     {
 
-        
+
         $loginBy = $request->login_by;
 
 
@@ -213,7 +213,7 @@ class Delivered_byController extends Controller
         }
     }
 
-  
+
 
     /**
      * Show the form for editing the specified resource.
