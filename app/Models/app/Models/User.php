@@ -52,9 +52,9 @@ class User extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function Delivered_by()
+    public function delivered_by()
     {
-        return $this->hasOne(Delivered_by::class);
+        return $this->hasOne(Delivered_by::class, 'delivered_by_id');
     }
     
     public  function user_create ()
