@@ -14,7 +14,8 @@ class UserAddressSentController extends Controller
 
         $userId = $request->user_id;
 
-        $User_address_sent = User_address_sent::with('user');
+        $User_address_sent = User_address_sent::with('user')
+            ->with('user_page');
 
         if ($userId) {
             $User_address_sent->where('user_id', $userId);
@@ -55,7 +56,8 @@ class UserAddressSentController extends Controller
         $orderby = array('id', 'user_id', 'user_page_id', 'name', 'address', 'tel', 'remark', 'status', 'create_by', 'update_by', 'created_at', 'updated_at');
 
         $d = User_address_sent::select($col)
-            ->with('user');
+            ->with('user')
+            ->with('user_page');
 
         //if
 
@@ -145,18 +147,17 @@ class UserAddressSentController extends Controller
 
             for ($i = 0; $i < count($userPageId); $i++) {
 
-            $User_address_sent = new User_address_sent();
-            $User_address_sent->user_id = $request->user_id;
-            $User_address_sent->user_page_id = $userPageId[$i];
-            $User_address_sent->name = $request->name;
-            $User_address_sent->address = $request->address;
-            $User_address_sent->tel = $request->tel;
-            $User_address_sent->remark = $request->remark;
+                $User_address_sent = new User_address_sent();
+                $User_address_sent->user_id = $request->user_id;
+                $User_address_sent->user_page_id = $userPageId[$i];
+                $User_address_sent->name = $request->name;
+                $User_address_sent->address = $request->address;
+                $User_address_sent->tel = $request->tel;
+                $User_address_sent->remark = $request->remark;
 
-            $User_address_sent->updated_at = Carbon::now()->toDateTimeString();
+                $User_address_sent->updated_at = Carbon::now()->toDateTimeString();
 
-            $User_address_sent->save();
-
+                $User_address_sent->save();
             }
 
 
@@ -180,6 +181,7 @@ class UserAddressSentController extends Controller
     public function show($id)
     {
         $User_address_sent = User_address_sent::with('user')
+            ->with('user_page')
             ->find($id);
 
         if ($User_address_sent) {

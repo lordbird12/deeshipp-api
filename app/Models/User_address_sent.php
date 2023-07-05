@@ -28,4 +28,9 @@ class User_address_sent extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function user_page()
+    {
+        return $this->belongsTo(User_page::class);
+    }
 }
