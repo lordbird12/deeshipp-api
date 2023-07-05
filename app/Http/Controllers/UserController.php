@@ -1141,14 +1141,15 @@ class UserController extends Controller
     public function updateDeliveryUser(Request $request)
     {
 
-        $deliveredById = $request->delivered_by_id;
+        // $deliveredById = $request->delivered_by_id;
         $deliveredFee = $request->delivered_fee;
 
         $loginBy = $request->login_by;
 
-        if (!isset($deliveredById)) {
-            return $this->returnErrorData('กรุณาระบุรหัสขนส่งให้เรียบร้อย', 404);
-        } else if (!isset($deliveredFee)) {
+        // if (!isset($deliveredById)) {
+        //     return $this->returnErrorData('กรุณาระบุรหัสขนส่งให้เรียบร้อย', 404);
+        // } else
+        if (!isset($deliveredFee)) {
             return $this->returnErrorData('กรุณาระบุจำนวนค่าขนส่งที่ต้องการให้เรียบร้อย', 404);
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('ไม่พบข้อมูลเจ้าหน้าที่ กรุณาเข้าสู่ระบบใหม่อีกครั้ง', 404);
@@ -1160,7 +1161,7 @@ class UserController extends Controller
         try {
 
             $User = User::find($loginBy->id);
-            $User->delivered_by_id = $deliveredById;
+            // $User->delivered_by_id = $deliveredById;
             $User->delivered_fee = $deliveredFee;
 
             $User->save();
