@@ -259,6 +259,7 @@ class UserController extends Controller
         $User = User::with('permission')
             ->with('user_ref')
             ->with('user_create')
+            ->with('delivered_by')
             ->where('id', $request->login_id)
             ->first();
 
