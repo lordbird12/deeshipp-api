@@ -42,8 +42,7 @@ class ItemController extends Controller
         //
 
         $item = Item::with('item_type')
-            ->with('user')
-            ->with('location');
+            ->with('user');
 
         if ($userId) {
             $item->where('user_id', $userId);
@@ -93,7 +92,6 @@ class ItemController extends Controller
                 $Order = Item::find($id);
 
                 $Order->vendor_id = $request->vendor_id;
-                $Order->location_id = $request->location_id;
                 $Order->name = $request->name;
                 $Order->brand = $request->brand;
 
@@ -195,7 +193,6 @@ class ItemController extends Controller
 
         $item = Item::with('item_type')
             ->with('user')
-            ->with('location')
             ->where('item_type_id', $item_type_id);
 
         if ($userId) {
@@ -218,23 +215,6 @@ class ItemController extends Controller
         return $this->returnSuccess('Successful', $Item);
     }
 
-
-    public function getStockItemByLocation(Request $request)
-    {
-
-        $itemId = $request->item_id;
-        $locationId = $request->location_1_id;
-
-        $QtyItem = Item_trans::where('item_id', $itemId);
-
-        if (!empty($location_id)) {
-            $QtyItem->whereIn('location_1_id', $locationId);
-        }
-        $qtyItem = $QtyItem->where('status', 1)
-            ->sum('qty');
-
-        return $this->returnSuccess('Successful', intval($qtyItem));
-    }
 
     public function ItemPage(Request $request)
     {
@@ -271,7 +251,6 @@ class ItemController extends Controller
             'image',
             'unit_price',
             'unit_cost',
-            'location_id',
             'vendor_id',
             'barcode',
             'brand',
@@ -287,7 +266,6 @@ class ItemController extends Controller
 
             ->with('user_create')
             ->with('item_type')
-            ->with('location.warehouse')
             ->with('main_itemLine.item')
 
             //->where('item_type_id', $item_type_id)
@@ -399,7 +377,7 @@ class ItemController extends Controller
 
 
 
-                $Item->location_id = $request->location_id;
+
 
                 $Item->vendor_id = $request->vendor_id;
 
@@ -467,8 +445,6 @@ class ItemController extends Controller
             return $this->returnErrorData('กรุณาใส่ต้นทุนสินค้า', 404);
         } else if (!isset($request->unit_price) && $request->set_type == 'normal') {
             return $this->returnErrorData('กรุณาใส่ราคาสินค้า', 404);
-        } else if (!isset($request->location_id) && $request->set_type == 'normal') {
-            return $this->returnErrorData('กรุณาใส่ที่อยู่สินค้า', 404);
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
@@ -502,7 +478,7 @@ class ItemController extends Controller
                     //des
 
                     $Item->image = $request->image;
-                    $Item->location_id = $request->location_id;
+
                     $Item->vendor_id = $request->vendor_id;
 
                     $Item->set_type = $request->set_type;
@@ -588,8 +564,6 @@ class ItemController extends Controller
                         $Item_trans->qty = $qty;
                         $Item_trans->main_item_id = $Item->id;
 
-                        $Item_trans->location_1_id = $Item_Line->location_id;
-
 
                         $Item_trans->customer_id = $request->customer_id;
                         $Item_trans->stock = $stockCount;
@@ -641,7 +615,6 @@ class ItemController extends Controller
 
         $Item = Item::with('item_type')
             ->with('user')
-            ->with('location')
             ->with('vendor')
 
             ->with('main_itemLine.item')
@@ -675,87 +648,87 @@ class ItemController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
-    {
+    // public function update(Request $request)
+    // {
 
-        $loginBy = $request->login_by;
-        $id = $request->id;
+    //     $loginBy = $request->login_by;
+    //     $id = $request->id;
 
-        if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
+    //     if (!isset($loginBy)) {
+    //         return $this->returnErrorData('[login_by] Data Not Found', 404);
+    //     }
 
-        $itemId = $request->item_id;
+    //     $itemId = $request->item_id;
 
-        $checkitemId = Item::where('id', '!=', $id)
-            ->where('item_id', $itemId)
-            ->first();
+    //     $checkitemId = Item::where('id', '!=', $id)
+    //         ->where('item_id', $itemId)
+    //         ->first();
 
-        if ($checkitemId) {
-            return $this->returnErrorData('There is already this item id in the system', 404);
-        } else {
+    //     if ($checkitemId) {
+    //         return $this->returnErrorData('There is already this item id in the system', 404);
+    //     } else {
 
-            DB::beginTransaction();
+    //         DB::beginTransaction();
 
-            try {
+    //         try {
 
-                $Item = Item::find($id);
-                $Item->item_id = $itemId;
-
-
-                if ($request->image && $request->image != 'null' && $request->image != null) {
-                    $Item->image = $this->uploadImage($request->image, '/images/item/');
-                }
-
-                $Item->location_id = $request->location_id;
-                $Item->name = $request->name;
-                $Item->vendor_id = $request->vendor_id;
-                $Item->item_id = $this->getLastNumber(5);
-                $Item->barcode = $this->getLastNumber(5);
-
-                $this->setRunDoc(5, $Item->barcode, $Item->item_id);
-
-                $Item->set_type = $request->set_type;
-                $Item->total_price = $request->total_price;
+    //             $Item = Item::find($id);
+    //             $Item->item_id = $itemId;
 
 
-                $Item->brand = $request->brand;
-                $Item->unit_cost = $request->unit_cost;
-                $Item->unit_price = $request->unit_price;
+    //             if ($request->image && $request->image != 'null' && $request->image != null) {
+    //                 $Item->image = $this->uploadImage($request->image, '/images/item/');
+    //             }
 
-                $Item->description = $request->description;
-                $Item->weight = $request->weight;
+    //             $Item->location_id = $request->location_id;
+    //             $Item->name = $request->name;
+    //             $Item->vendor_id = $request->vendor_id;
+    //             $Item->item_id = $this->getLastNumber(5);
+    //             $Item->barcode = $this->getLastNumber(5);
 
-                $Item->item_type_id = $request->item_type_id;
+    //             $this->setRunDoc(5, $Item->barcode, $Item->item_id);
 
-                $Item->status = $request->status;
+    //             $Item->set_type = $request->set_type;
+    //             $Item->total_price = $request->total_price;
 
-                $Item->update_by = $loginBy->user_id;
-                $Item->updated_at = Carbon::now()->toDateTimeString();
 
-                $Item->item_type_id = $request->item_type_id;
+    //             $Item->brand = $request->brand;
+    //             $Item->unit_cost = $request->unit_cost;
+    //             $Item->unit_price = $request->unit_price;
 
-                $Item->save();
-                $Item->item_type;
+    //             $Item->description = $request->description;
+    //             $Item->weight = $request->weight;
 
-                //log
-                $userId = $loginBy->user_id;
-                $type = 'Edit Item';
-                $description = 'User ' . $userId . ' has ' . $type . ' ' . $Item->name;
-                $this->Log($userId, $description, $type);
-                //
+    //             $Item->item_type_id = $request->item_type_id;
 
-                DB::commit();
+    //             $Item->status = $request->status;
 
-                return $this->returnUpdate('Successful operation', $Item);
-            } catch (\Throwable $e) {
+    //             $Item->update_by = $loginBy->user_id;
+    //             $Item->updated_at = Carbon::now()->toDateTimeString();
 
-                DB::rollback();
+    //             $Item->item_type_id = $request->item_type_id;
 
-                return $this->returnErrorData('Something went wrong Please try again' . $e, 404);
-            }
-        }
-    }
+    //             $Item->save();
+    //             $Item->item_type;
+
+    //             //log
+    //             $userId = $loginBy->user_id;
+    //             $type = 'Edit Item';
+    //             $description = 'User ' . $userId . ' has ' . $type . ' ' . $Item->name;
+    //             $this->Log($userId, $description, $type);
+    //             //
+
+    //             DB::commit();
+
+    //             return $this->returnUpdate('Successful operation', $Item);
+    //         } catch (\Throwable $e) {
+
+    //             DB::rollback();
+
+    //             return $this->returnErrorData('Something went wrong Please try again' . $e, 404);
+    //         }
+    //     }
+    // }
 
     /**
      * Remove the specified resource from storage.

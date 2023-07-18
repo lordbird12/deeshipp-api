@@ -23,35 +23,29 @@ class Controller extends BaseController
 
 
 
-    public function getStockCountqty($item_id, $location_id)
+    public function getStockCountqty($item_id)
     {
         $QtyItem = Item_trans::where('item_id', $item_id);
 
-        if (!empty($location_id)) {
-            $QtyItem->whereIn('location_1_id', $location_id);
-        }
         $qtyItem = $QtyItem->where('status', 1)
-        ->where('operation', 'finish')
+            ->where('operation', 'finish')
             ->sum('qty');
 
         return intval($qtyItem);
     }
 
- public function getStockBookingCount($item_id, $location_id)
+    public function getStockBookingCount($item_id)
     {
         $QtyItem = Item_trans::where('item_id', $item_id);
 
-        if (!empty($location_id)) {
-            $QtyItem->whereIn('location_1_id', $location_id);
-        }
         $qtyItem = $QtyItem->where('status', 1)
- ->where('operation', 'booking')
+            ->where('operation', 'booking')
             ->sum('qty');
 
         return intval($qtyItem);
     }
 
-    
+
     public function returnSuccess($massage, $data)
     {
 
@@ -75,7 +69,7 @@ class Controller extends BaseController
 
 
 
-    
+
     public function returnUpdateReturnData($massage, $data)
     {
         return response()->json([
@@ -170,15 +164,14 @@ class Controller extends BaseController
         $image->move($destinationPath, $input['imagename']);
 
 
-        return $this->returnSuccess('Successful operation',url($path.$input['imagename']) );
-        
+        return $this->returnSuccess('Successful operation', url($path . $input['imagename']));
     }
 
 
 
     public function uploadImage($image, $path)
     {
-        
+
         $input['imagename'] = md5(rand(0, 999999) . $image->getClientOriginalName()) . '.' . $image->extension();
         $destinationPath = public_path('/thumbnail');
         if (!File::exists($destinationPath)) {
@@ -189,7 +182,7 @@ class Controller extends BaseController
         $img->save($destinationPath . '/' . $input['imagename']);
         $destinationPath = public_path($path);
         $image->move($destinationPath, $input['imagename']);
-     
+
         return $path . $input['imagename'];
     }
 
@@ -239,7 +232,6 @@ class Controller extends BaseController
         }
 
         return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $data);
-
     }
 
     public function getDropDownProvince()
@@ -255,7 +247,6 @@ class Controller extends BaseController
         }
 
         return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $data);
-
     }
 
     public function getDownloadFomatImport($params)
@@ -265,7 +256,6 @@ class Controller extends BaseController
         $destinationPath = public_path() . "/fomat_import/";
 
         return response()->download($destinationPath . $file);
-
     }
 
     public function checkDigitMemberId($memberId)
@@ -275,7 +265,6 @@ class Controller extends BaseController
         for ($i = 0; $i < 12; $i++) {
 
             $sum += (int) ($memberId[$i]) * (13 - $i);
-
         }
 
         if ((11 - ($sum % 11)) % 10 == (int) ($memberId[12])) {
@@ -283,37 +272,28 @@ class Controller extends BaseController
         } else {
             return 'false';
         }
-
     }
 
     public function setRunDoc($docId, $lastId)
     {
-        
+
         $doc = Doc::find($docId);
         $doc->gen = $lastId;
-   
-        $doc->save();
 
+        $doc->save();
     }
 
 
-    public function getStockCount($item_id, $location_id)
+    public function getStockCount($item_id)
     {
 
         $QtyItem = Item_trans::where('item_id', $item_id);
 
-
-        if (!empty($location_id)) {
-            $QtyItem->whereIn('location_1_id', $location_id);
-        
-        }
         $qtyItem = $QtyItem->where('status', 1)
             ->sum('qty');
-                   
-           // dd($qtyItem);
-        return intval($qtyItem);
 
-       
+        // dd($qtyItem);
+        return intval($qtyItem);
     }
 
     public function getItemCount($item_id, $main_item_id)
@@ -324,22 +304,19 @@ class Controller extends BaseController
 
         if (!empty($main_item_id)) {
             $QtyItem->whereIn('main_item_id', $main_item_id);
-        
         }
         $qtyItem = $QtyItem
             ->sum('qty');
-                   
-           // dd($qtyItem);
-        return intval($qtyItem);
 
-       
+        // dd($qtyItem);
+        return intval($qtyItem);
     }
 
 
     public function getLastNumber($docId)
     {
         $doc = Doc::find($docId);
-//dd($doc);
+        //dd($doc);
         if ($doc->gen) {
 
             //prefix
@@ -382,19 +359,15 @@ class Controller extends BaseController
 
                     $newNumber = intval($lastNumber) + 1;
                     $Number = sprintf('%0' . strval($countRunNumber) . 'd', $newNumber);
-
                 } else {
 
                     $lastNumber = substr($doc->gen, -$countRunNumber);
                     $newNumber = intval($lastNumber) + 1;
                     $Number = sprintf('%0' . strval($countRunNumber) . 'd', $newNumber);
-
                 }
-
             } else {
                 $Number = null;
             }
-
         } else {
 
             //case new gen
@@ -429,7 +402,6 @@ class Controller extends BaseController
             } else {
                 $Number = null;
             }
-
         }
 
         //format

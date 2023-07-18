@@ -263,11 +263,6 @@ class UserController extends Controller
             ->where('id', $request->login_id)
             ->first();
 
-        $User->income = IncomePaid::where('user_id',  $User->id)->get();
-        $User->deduct = DeductPaid::where('user_id',  $User->id)->get();
-
-        $User->total_income = IncomePaid::where('user_id',  $User->id)->sum('price');
-        $User->total_deduct = DeductPaid::where('user_id',  $User->id)->sum('price');
 
         $User->total = ($User->salary +  $User->total_income) - $User->total_deduct;
 
@@ -929,11 +924,6 @@ class UserController extends Controller
 
                 $No = $No + 1;
                 $d[$i]->No = $No;
-                $d[$i]->income = IncomePaid::where('user_id', $d[$i]->user_id)->get();
-                $d[$i]->deduct = DeductPaid::where('user_id', $d[$i]->user_id)->get();
-
-                $d[$i]->total_income = IncomePaid::where('user_id', $d[$i]->user_id)->sum('price');
-                $d[$i]->total_deduct = DeductPaid::where('user_id', $d[$i]->user_id)->sum('price');
 
                 $d[$i]->total = ($d[$i]->salary + $d[$i]->total_income) - $d[$i]->total_deduct;
 

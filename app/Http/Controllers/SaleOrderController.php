@@ -178,10 +178,6 @@ class SaleOrderController extends Controller
                 $saleOrderLine = Sale_order_line::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
                 $Sale_order[$i]['qty_sale_order'] = intval($saleOrderLine);
 
-                $qtySaleOrderJob = Qty_sale_order_job::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
-                $Sale_order[$i]['qty_sale_order_job'] = intval($qtySaleOrderJob);
-
-                $Sale_order[$i]['result'] = intval($saleOrderLine) - intval($qtySaleOrderJob);
             }
         }
 
@@ -467,7 +463,7 @@ class SaleOrderController extends Controller
                     $Item = Item::where('id', $Order[$i]['item_id'])->first();
 
 
-                    $stockCount = $this->getStockCount($Order[$i]['item_id'], []);
+                    $stockCount = $this->getStockCount($Order[$i]['item_id']);
 
                     //  $stockCount = $this->getStockCount($Order[$i]['item_id'], [$Item->location_id]);
 
@@ -480,7 +476,6 @@ class SaleOrderController extends Controller
                     $Item_trans->item_id = $Item->id;
                     $Item_trans->qty = $qty;
 
-                    $Item_trans->location_1_id = $Item->location_id;
 
                     $Item_trans->customer_id = $Customer->id;
 
@@ -642,7 +637,7 @@ class SaleOrderController extends Controller
                     $Item = Item::where('id', $Order[$i]['item_id'])->first();
                     // dd($Item);
                     //stock Count
-                    $stockCount = $this->getStockCount($Order[$i]['item_id'], [$Item->location_id]);
+                    $stockCount = $this->getStockCount($Order[$i]['item_id']);
 
                     if (abs($qty) > $stockCount) {
                         return $this->returnErrorData('สินค้าใน stock ไม่พอเบิกออก', 404);
@@ -652,8 +647,6 @@ class SaleOrderController extends Controller
                     $Item_trans->sale_order_id = $Sale_order->id;
                     $Item_trans->item_id = $Item->id;
                     $Item_trans->qty = $qty;
-
-                    $Item_trans->location_1_id = $Item->location_id;
 
 
                     $Item_trans->customer_id = $request->customer_id;
@@ -693,7 +686,7 @@ class SaleOrderController extends Controller
     public function show($id)
     {
         $Sale_order = Sale_order::with(['sale_order_lines' => function ($query) {
-            $query->with('item.location.warehouse');
+
             //$query->with('saleorder_id');
         }])
             ->with('saleorder_id.report_stock')
@@ -710,7 +703,7 @@ class SaleOrderController extends Controller
     public function getOrderLiveById($id)
     {
         $Sale_order = Sale_order::with(['sale_order_lines' => function ($query) {
-            $query->with('item.location.warehouse');
+
             //$query->with('saleorder_id');
         }])
             ->with('saleorder_id.report_stock')
@@ -1407,7 +1400,7 @@ class SaleOrderController extends Controller
                 $Item_trans->item_id = $Item->id;
                 $Item_trans->qty = $qty;
 
-                $Item_trans->location_1_id = $Item->location_id;
+
 
                 $Item_trans->customer_id = $Customer->id;
 
@@ -1520,7 +1513,7 @@ class SaleOrderController extends Controller
                 // $Item_trans->item_id = $Item->id;
                 // $Item_trans->qty = $qty;
 
-                // $Item_trans->location_1_id = $Item->location_id;
+
 
                 // $Item_trans->customer_id = $Customer->id;
 
@@ -1765,7 +1758,7 @@ class SaleOrderController extends Controller
                 $Item_trans->item_id = $Item->id;
                 $Item_trans->qty = -$qty;
 
-                $Item_trans->location_1_id = $Item->location_id;
+
 
                 $Item_trans->customer_id = $Customer->id;
 
@@ -1880,7 +1873,7 @@ class SaleOrderController extends Controller
                 $Item_trans->item_id = $Item->id;
                 $Item_trans->qty = -$qty;
 
-                $Item_trans->location_1_id = $Item->location_id;
+
 
                 $Item_trans->customer_id = $Customer->id;
 

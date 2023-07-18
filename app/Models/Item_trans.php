@@ -62,17 +62,6 @@ class Item_trans extends Model
         return $this->belongsTo(Vendor::class);
     }
 
-    //location
-    public function location_1()
-    {
-        return $this->belongsTo(Location::class, 'location_1_id', 'id');
-    }
-
-    public function location_2()
-    {
-        return $this->belongsTo(Location::class, 'location_2_id', 'id');
-    }
-    //
 
     public function lot_trans()
     {

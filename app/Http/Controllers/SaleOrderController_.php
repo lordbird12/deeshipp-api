@@ -165,10 +165,7 @@ class SaleOrderController extends Controller
                 $saleOrderLine = Sale_order_line::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
                 $Sale_order[$i]['qty_sale_order'] = intval($saleOrderLine);
 
-                $qtySaleOrderJob = Qty_sale_order_job::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
-                $Sale_order[$i]['qty_sale_order_job'] = intval($qtySaleOrderJob);
 
-                $Sale_order[$i]['result'] = intval($saleOrderLine) - intval($qtySaleOrderJob);
             }
         }
 

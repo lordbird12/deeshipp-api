@@ -22,13 +22,13 @@ class ItemTransController extends Controller
         $page = $start / $length + 1;
 
         $reportStockId = $request->report_stock_id;
-      
+
         if (!isset($reportStockId)) {
             return $this->returnErrorData('[report_stock_id] Data Not Found', 404);
         }
 
         $col = array('id', 'item_id', 'report_stock_id', 'customer_id', 'vendor_id', 'date', 'stock', 'qty'
-            , 'balance', 'adj_qa', 'location_1_id', 'location_2_id','delevery_order_id'
+            , 'balance', 'adj_qa','delevery_order_id'
             , 'po_number', 'remark', 'type', 'status', 'create_by', 'created_at', 'updated_at');
 //dd( $col);
         $d = Item_trans::select($col)
@@ -36,7 +36,7 @@ class ItemTransController extends Controller
                 //$query->with('unit_store');
                 //$query->with('unit_buy');
                 //$query->with('unit_sell');
-                $query->with('location');
+
                 //$query->with('material_group');
                 //$query->with('material_type');
                 //$query->with('material_grade');
@@ -48,8 +48,7 @@ class ItemTransController extends Controller
             ->with('customer')
             ->with('vendor')
             ->with('report_stock')
-           // ->with('location_1')
-            //->with('location_2')
+
             //->with('job')
             //->with('delevery_order')
             //->with('qc')
@@ -104,7 +103,7 @@ class ItemTransController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-   
+
 
     /**
      * Store a newly created resource in storage.
@@ -112,21 +111,21 @@ class ItemTransController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-   
+
     /**
      * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    
+
     /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-   
+
     /**
      * Update the specified resource in storage.
      *
@@ -136,7 +135,7 @@ class ItemTransController extends Controller
      */
     public function update(Request $request, $id)
     {
-        
+
         $loginBy = $request->login_by;
 
         if (!isset($id)) {
@@ -150,7 +149,7 @@ class ItemTransController extends Controller
         try {
 
             $Item_trans = Item_trans::find($id);
-            
+
             //check +- qty
             if ($Item_trans->type == 'Deposit' || $Item_trans->type == 'QC' || $Item_trans->type == 'Mat_QC' || $Item_trans->type == 'Mat_Cancel') {
                 $QTY = $request->qty;
@@ -170,8 +169,7 @@ class ItemTransController extends Controller
             $Item_trans->balance = $request->balance;
             // $Item_trans->lot_maker = $request->lot_maker; //lot_maker
             $Item_trans->unit_convertion_id = $request->unit_convertion_id;
-            $Item_trans->location_1_id = $request->location_1_id;
-            $Item_trans->location_2_id = $request->location_2_id;
+
             $Item_trans->remark = $request->remark;
             $Item_trans->update_by = $loginBy->user_id;
             $Item_trans->updated_at = Carbon::now()->toDateTimeString();
@@ -197,54 +195,6 @@ class ItemTransController extends Controller
                     $sumQty += abs(intval($Lot[$j]['qty']));
                 }
                 //
-
-                //get lot trans
-                $LotTrans = Lot_trans::where('item_id', $Item_trans->item_id)
-                    ->where('item_trans_id', $Item_trans->id)
-                    ->get();
-
-                //del lot trans
-                for ($j = 0; $j < count($LotTrans); $j++) {
-                    $LotTrans[$j]->deleted_at = date('Y-m-d H:i:s');
-                    $LotTrans[$j]->update_by = $loginBy->user_id;
-                    $LotTrans[$j]->save();
-                }
-                //
-
-                //add new  lot trans
-                for ($j = 0; $j < count($Lot); $j++) {
-
-                    //check +- qty
-                    if ($Item_trans->type == 'Deposit' || $Item_trans->type == 'QC' || $Item_trans->type == 'Mat_QC' || $Item_trans->type == 'Mat_Cancel') {
-                        $Qty = -$Lot[$j]['qty'];
-                    } else if ($Item_trans->type == 'Withdraw') {
-                        $Qty = -$Lot[$j]['qty'];
-                    } else if ($Item_trans->type == 'Adjust') {
-                        //adj
-                        if ($Item_trans->description == 'Add') {
-                            $Qty = -$Lot[$j]['qty'];
-                        } else {
-                            $Qty = -$Lot[$j]['qty'];
-                        }
-
-                    }
-
-                    //add lot trans
-                    $Lot_trans = new Lot_trans();
-                    $Lot_trans->item_id = $Item_trans->item_id;
-                    $Lot_trans->lot_id = $Lot[$j]['lot_id'];
-                    $Lot_trans->lot_maker = $Lot[$j]['lot_maker']; //lot maker
-                    $Lot_trans->qty = $Qty;
-
-                    $Lot_trans->item_trans_id = $Item_trans->id;
-                    $Lot_trans->location_1_id = $Item_trans->location_1_id;
-
-                    $Lot_trans->status = 0;
-
-                    $Lot_trans->create_by = $loginBy->user_id;
-                    $Lot_trans->save();
-
-                }
                 //
 
             }
@@ -298,7 +248,7 @@ class ItemTransController extends Controller
 
     public function editItemTrans(Request $request)
     {
-       
+
         $itemTrans = $request->item_trans;
 
         $loginBy = $request->login_by;
@@ -325,8 +275,6 @@ class ItemTransController extends Controller
 
                 $Item_trans->balance = $itemTrans[$i]['balance'];
                 $Item_trans->unit_convertion_id = $itemTrans[$i]['unit_convertion_id'];
-                $Item_trans->location_1_id = $itemTrans[$i]['location_1_id'];
-                $Item_trans->location_2_id = $itemTrans[$i]['location_2_id'];
                 $Item_trans->remark = $itemTrans[$i]['remark'];
                 $Item_trans->update_by = $loginBy->user_id;
                 $Item_trans->updated_at = Carbon::now()->toDateTimeString();
@@ -363,17 +311,16 @@ class ItemTransController extends Controller
         $page = $start / $length + 1;
 
      //   $reportStockId = $request->report_stock_id;
-      
-      
+
+
         $col = array('id', 'item_id', 'report_stock_id', 'customer_id', 'vendor_id', 'date', 'stock', 'qty'
-            , 'balance', 'adj_qa', 'location_1_id', 'location_2_id','delevery_order_id'
+            , 'balance', 'adj_qa','delevery_order_id'
             , 'po_number', 'remark', 'type', 'status', 'create_by', 'created_at', 'updated_at');
 //dd( $col);
         $d = Item_trans::select($col)
             ->with(['item' => function ($query) {
-            
-                $query->with('location.warehouse');
-               
+
+
             }])
             ->with('item.item_type')
             ->with('customer')

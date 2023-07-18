@@ -19,7 +19,7 @@ class ReportStockController extends Controller
 
 
 
-   
+
 
     public function getReportStockByType(Request $request)
     {
@@ -66,8 +66,6 @@ class ReportStockController extends Controller
                 $query->with('sale_order2');
                 $query->with('item');
                 $query->with('customer');
-                $query->with('location_1');
-                $query->with('location_2');
             }])
             ->find($id);
 
@@ -82,7 +80,6 @@ class ReportStockController extends Controller
                 $query->with('item');
                 $query->with('customer');
 
-                $query->with('location_1');
             }])
             ->find($id);
 
@@ -214,11 +211,11 @@ class ReportStockController extends Controller
             return $this->returnErrorData('กรุณาเพิ่มสินค้า', 404);
         } else if (!isset($request->date)) {
             return $this->returnErrorData('กรุณาระบุวันที่', 404);
-            
+
         } else if (!isset($request->vendor_id)) {
             return $this->returnErrorData('กรุณาระบุซัพพลายเออร์', 404);
-        } 
-        
+        }
+
         else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
@@ -265,7 +262,7 @@ class ReportStockController extends Controller
                 //
 
                 //stock Count
-                $stockCount = $this->getStockCount($Deposit[$i]['item_id'], [$Deposit[$i]['location_1_id']]);
+                $stockCount = $this->getStockCount($Deposit[$i]['item_id']);
 
                 $Deposit[$i]['stock'] = $stockCount;
 
@@ -277,7 +274,7 @@ class ReportStockController extends Controller
                 $Deposit[$i]['report_stock_id'] = $report_stock->id; //report id
                 //dd($Deposit[$i]['report_stock_id'] );
                 $Deposit[$i]['po_number'] = $request->po_number; //inv no
-                //$Deposit[$i]['lot_maker'] = $request->lot_maker; 
+                //$Deposit[$i]['lot_maker'] = $request->lot_maker;
                 //dd($Deposit[$i]['po_number']);
 
                 $Deposit[$i]['vendor_id'] = $request->vendor_id; //vendor_id
@@ -311,7 +308,7 @@ class ReportStockController extends Controller
 
 
 
-   
+
 
     public function DepositLotItem(Request $request)
     {
@@ -350,13 +347,12 @@ class ReportStockController extends Controller
             for ($i = 0; $i < count($Deposit); $i++) {
 
                 //stock Count
-                $stockCount = $this->getStockCount($Deposit[$i]['item_id'], [$Deposit[$i]['location_1_id']]);
+                $stockCount = $this->getStockCount($Deposit[$i]['item_id']);
 
                 $Item_trans = new Item_trans();
                 $Item_trans->item_id = $Deposit[$i]['item_id'];
                 $Item_trans->qty = $Deposit[$i]['qty'];
 
-                $Item_trans->location_1_id = $Deposit[$i]['location_1_id'];
                 $Item_trans->unit_convertion_id = $Deposit[$i]['unit_convertion_id'];
                 // $Item_trans->lot_maker = $Deposit[$i]['lot_maker'];
                 $Item_trans->remark = $Deposit[$i]['remark'];
@@ -425,7 +421,7 @@ class ReportStockController extends Controller
                 //qty withdraw
                 $qty = -$Withdraw[$i]['qty'];;
                 //stock Count
-                $stockCount = $this->getStockCount($Withdraw[$i]['item_id'], [$Withdraw[$i]['location_1_id']]);
+                $stockCount = $this->getStockCount($Withdraw[$i]['item_id']);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('Not enough item', 404);
@@ -435,9 +431,6 @@ class ReportStockController extends Controller
                 $Item_trans->item_id = $Withdraw[$i]['item_id'];
                 $Item_trans->qty = $qty;
 
-
-
-                $Item_trans->location_1_id = $Withdraw[$i]['location_1_id'];
 
 
 
@@ -566,7 +559,7 @@ class ReportStockController extends Controller
             for ($i = 0; $i < count($Move); $i++) {
 
                 //stock Count
-                $stockCount = $this->getStockCount($Move[$i]['item_id'], [$Move[$i]['location_1_id']]);
+                $stockCount = $this->getStockCount($Move[$i]['item_id']);
 
                 //qty
                 $qty = -$Move[$i]['qty'];
@@ -574,8 +567,7 @@ class ReportStockController extends Controller
                 $Item_trans = new Item_trans();
                 $Item_trans->item_id = $Move[$i]['item_id'];
                 $Item_trans->qty = $qty;
-                $Item_trans->location_1_id = $Move[$i]['location_1_id'];
-                $Item_trans->location_2_id = $Move[$i]['location_2_id'];
+
                 $Item_trans->remark = $Move[$i]['remark'];
 
                 $Item_trans->stock = $stockCount;
@@ -634,14 +626,13 @@ class ReportStockController extends Controller
             for ($i = 0; $i < count($Move); $i++) {
 
                 //stock Count
-                $stockCount = $this->getStockCount($Move[$i]['item_id'], [$Move[$i]['location_2_id']]);
+                $stockCount = $this->getStockCount($Move[$i]['item_id']);
 
                 $Item_trans = new Item_trans();
 
                 $Item_trans->item_id = $Move[$i]['item_id'];
                 $Item_trans->qty = $Move[$i]['qty'];
-                $Item_trans->location_1_id = $Move[$i]['location_2_id'];
-                $Item_trans->location_2_id = $Move[$i]['location_1_id'];
+
                 $Item_trans->remark = $Move[$i]['remark'];
 
                 $Item_trans->stock = $stockCount;
@@ -764,7 +755,7 @@ class ReportStockController extends Controller
             for ($i = 0; $i < count($Adjust); $i++) {;
                 $Adjust[$i]['qty'] = $Adjust[$i]['qty'];
                 //stock Count
-                $stockCount = $this->getStockCount($Adjust[$i]['item_id'], [$Adjust[$i]['location_1_id']]);
+                $stockCount = $this->getStockCount($Adjust[$i]['item_id']);
 
                 //adjust_type
                 if ($Adjust[$i]['adjust_type'] == 'Add') {
@@ -779,7 +770,6 @@ class ReportStockController extends Controller
                 $Item_trans->qty = $Adjust[$i]['qty'];
 
 
-                $Item_trans->location_1_id = $Adjust[$i]['location_1_id'];
                 //$Item_trans->unit_convertion_id = $Adjust[$i]['unit_convertion_id'];
                 // $Item_trans->lot_maker = $Adjust[$i]['lot_maker'];
                 $Item_trans->remark = $Adjust[$i]['remark'];

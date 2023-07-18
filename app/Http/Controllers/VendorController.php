@@ -100,7 +100,7 @@ class VendorController extends Controller
             return $this->returnErrorData('กรุณาใส่เบอร์โทร', 404);
         } else if (!isset($request->address)) {
             return $this->returnErrorData('กรุณาใส่ที่อยู่', 404);
-            
+
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
@@ -119,7 +119,7 @@ class VendorController extends Controller
             try {
 
                 $Vendor = new Vendor();
-               
+
 
                 $Vendor->name = $name;
                 //$Vendor->delivered_by_id = $request->delivered_by_id;
@@ -129,16 +129,16 @@ class VendorController extends Controller
                 $Vendor->phone = $request->phone;
                 $Vendor->address = $request->address;
 //dd($Vendor->adress);
-                
+
                 // $Vendor->ordered_shipping_price = $request->ordered_shipping_price;
-                
+
                 // $Vendor->sub_total = $request->sub_total;
-               
+
                 // $Vendor->vat = $request->vat;
                 // $Vendor->discount = $request->discount;
                 // $Vendor->total = $request->total;
                 // $Vendor->description = $request->description;
-                
+
                 $Vendor->status = 1;
 
                 $Vendor->create_by = $loginBy->user_id;
@@ -174,11 +174,11 @@ class VendorController extends Controller
     public function show($id)
     {
         $Vendor = Vendor::with('delivered_by')
-        ->with('warehouse')  
+        ->with('warehouse')
         ->where('id', $id)
         ->first();
-        
-      
+
+
         return $this->returnSuccess('Successful', $Vendor);
     }
 
@@ -298,123 +298,123 @@ class VendorController extends Controller
         }
     }
 
-    public function ImportVendor(Request $request)
-    {
+    // public function ImportVendor(Request $request)
+    // {
 
-        $loginBy = $request->login_by;
+    //     $loginBy = $request->login_by;
 
-        if (!isset($loginBy)) {
-            return $this->returnErrorData('User information not found. Please login again', 404);
-        }
+    //     if (!isset($loginBy)) {
+    //         return $this->returnErrorData('User information not found. Please login again', 404);
+    //     }
 
-        $file = request()->file('file');
-        $fileName = $file->getClientOriginalName();
+    //     $file = request()->file('file');
+    //     $fileName = $file->getClientOriginalName();
 
-        $Data = Excel::toArray(new VendorImport(), $file);
-        $data = $Data[0];
+    //     $Data = Excel::toArray(new VendorImport(), $file);
+    //     $data = $Data[0];
 
-        if (count($data) > 0) {
+    //     if (count($data) > 0) {
 
-            $insert_data = [];
+    //         $insert_data = [];
 
-            for ($i = 0; $i < count($data); $i++) {
+    //         for ($i = 0; $i < count($data); $i++) {
 
-                $name = trim($data[$i]['name']);
-                $contact = trim($data[$i]['contact']);
-                $email = trim($data[$i]['email']);
-                $phone = trim($data[$i]['phone']);
-                $adress = trim($data[$i]['adress']);
+    //             $name = trim($data[$i]['name']);
+    //             $contact = trim($data[$i]['contact']);
+    //             $email = trim($data[$i]['email']);
+    //             $phone = trim($data[$i]['phone']);
+    //             $adress = trim($data[$i]['adress']);
 
-                $row = $i + 2;
+    //             $row = $i + 2;
 
-                if ($name == '') {
-                    return $this->returnErrorData('Row excel data ' . $row . 'please enter name', 404);
-                } else if ($contact == '') {
-                    return $this->returnErrorData('Row excel data ' . $row . ' please enter contact', 404);
-                } else if ($email == '') {
-                    return $this->returnErrorData('Row excel data ' . $row . ' please enter email', 404);
-                } else if ($phone == '') {
-                    return $this->returnErrorData('Row excel data ' . $row . ' please enter phone', 404);
-                } else if ($adress == '') {
-                    return $this->returnErrorData('Row excel data ' . $row . ' please enter adress', 404);
-                }
+    //             if ($name == '') {
+    //                 return $this->returnErrorData('Row excel data ' . $row . 'please enter name', 404);
+    //             } else if ($contact == '') {
+    //                 return $this->returnErrorData('Row excel data ' . $row . ' please enter contact', 404);
+    //             } else if ($email == '') {
+    //                 return $this->returnErrorData('Row excel data ' . $row . ' please enter email', 404);
+    //             } else if ($phone == '') {
+    //                 return $this->returnErrorData('Row excel data ' . $row . ' please enter phone', 404);
+    //             } else if ($adress == '') {
+    //                 return $this->returnErrorData('Row excel data ' . $row . ' please enter adress', 404);
+    //             }
 
-                //check row sample
-                if ($name == 'SIMPLE-000') {
-                    //
-                } else {
+    //             //check row sample
+    //             if ($name == 'SIMPLE-000') {
+    //                 //
+    //             } else {
 
-                    // //check name
-                    // $Vendor = Vendor::where('name', $name)->first();
-                    // if ($Vendor) {
-                    //     return $this->returnErrorData('Vendor ' . $name . ' was information is already in the system', 404);
-                    // }
+    //                 // //check name
+    //                 // $Vendor = Vendor::where('name', $name)->first();
+    //                 // if ($Vendor) {
+    //                 //     return $this->returnErrorData('Vendor ' . $name . ' was information is already in the system', 404);
+    //                 // }
 
-                    //check dupicate data form file import
-                    for ($j = 0; $j < count($insert_data); $j++) {
+    //                 //check dupicate data form file import
+    //                 for ($j = 0; $j < count($insert_data); $j++) {
 
-                        if ($name == $insert_data[$j]['name']) {
-                            return $this->returnErrorData('Vendor ' . $name . ' There is duplicate data in the import file', 404);
-                        }
-                    }
-                    ///
+    //                     if ($name == $insert_data[$j]['name']) {
+    //                         return $this->returnErrorData('Vendor ' . $name . ' There is duplicate data in the import file', 404);
+    //                     }
+    //                 }
+    //                 ///
 
-                    $insert_data[] = array(
-                        'name' => $name,
-                        'contact' => $contact,
-                        'email' => $email,
-                        'phone' => $phone,
-                        'adress' => $adress,
-                        'status' => 1,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    );
+    //                 $insert_data[] = array(
+    //                     'name' => $name,
+    //                     'contact' => $contact,
+    //                     'email' => $email,
+    //                     'phone' => $phone,
+    //                     'adress' => $adress,
+    //                     'status' => 1,
+    //                     'created_at' => date('Y-m-d H:i:s'),
+    //                     'updated_at' => date('Y-m-d H:i:s'),
+    //                 );
 
-                }
+    //             }
 
-            }
+    //         }
 
-            if (!empty($insert_data)) {
+    //         if (!empty($insert_data)) {
 
-                DB::beginTransaction();
+    //             DB::beginTransaction();
 
-                try {
+    //             try {
 
-                    //updateOrInsert
-                    for ($i = 0; $i < count($insert_data); $i++) {
+    //                 //updateOrInsert
+    //                 for ($i = 0; $i < count($insert_data); $i++) {
 
-                        DB::table('vendor')
-                            ->updateOrInsert(
-                                [
-                                    'id' => trim($data[$i]['id']), //id
-                                ],
-                                $insert_data[$i]
-                            );
-                    }
-                    //
+    //                     DB::table('vendor')
+    //                         ->updateOrInsert(
+    //                             [
+    //                                 'id' => trim($data[$i]['id']), //id
+    //                             ],
+    //                             $insert_data[$i]
+    //                         );
+    //                 }
+    //                 //
 
-                    //log
-                    $userId = $loginBy->user_id;
-                    $type = 'Import Vendor';
-                    $description = 'User ' . $userId . ' has ' . $type . ' ' . $name;
-                    $this->Log($userId, $description, $type);
-                    //
+    //                 //log
+    //                 $userId = $loginBy->user_id;
+    //                 $type = 'Import Vendor';
+    //                 $description = 'User ' . $userId . ' has ' . $type . ' ' . $name;
+    //                 $this->Log($userId, $description, $type);
+    //                 //
 
-                    DB::commit();
+    //                 DB::commit();
 
-                    return $this->returnSuccess('Successful operation', []);
+    //                 return $this->returnSuccess('Successful operation', []);
 
-                } catch (\Throwable $e) {
+    //             } catch (\Throwable $e) {
 
-                    DB::rollback();
+    //                 DB::rollback();
 
-                    return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
-                }
+    //                 return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+    //             }
 
-            }
+    //         }
 
-        } else {
-            return $this->returnErrorData('Data Not Found', 404);
-        }
-    }
+    //     } else {
+    //         return $this->returnErrorData('Data Not Found', 404);
+    //     }
+    // }
 }

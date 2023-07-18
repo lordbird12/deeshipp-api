@@ -76,12 +76,6 @@ class Item extends Model
     }
     //
 
-    //location
-    public function location()
-    {
-        return $this->belongsTo(Location::class);
-    }
-    //
 
 
      //item_line
