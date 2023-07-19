@@ -15,7 +15,7 @@ use App\Models\Report_stock;
 use App\Models\Sale_order;
 use App\Models\Sale_order_line;
 use App\Models\Unit_convertion;
-use App\Models\User;ก
+use App\Models\User;
 use App\Models\User_bank;
 use App\Models\User_page;
 use App\Services\FacebookApi;
@@ -1586,7 +1586,7 @@ class SaleOrderController extends Controller
                 $Sale_order->save();
 
                 //stock Count
-                $stockCount = $this->getStockCount($Item->id, []);
+                $stockCount = $this->getStockCount($Item->id, null,null);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('สินค้าไม่พอ', 404);
@@ -1701,7 +1701,7 @@ class SaleOrderController extends Controller
                 $Sale_order->save();
 
                 //stock Count
-                $stockCount = $this->getStockCount($Item->id, []);
+                $stockCount = $this->getStockCount($Item->id, null,null);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('สินค้าไม่พอ', 404);
