@@ -15,7 +15,7 @@ use App\Models\Report_stock;
 use App\Models\Sale_order;
 use App\Models\Sale_order_line;
 use App\Models\Unit_convertion;
-use App\Models\User;
+use App\Models\User;ก
 use App\Models\User_bank;
 use App\Models\User_page;
 use App\Services\FacebookApi;
@@ -50,95 +50,6 @@ class SaleOrderController extends Controller
         return $this->returnSuccess('Successful', $Sale_order);
     }
 
-    public function getSaleOrderApprove()
-    {
-        $Sale_order = Sale_order::where('status', 'confirm')->orderby('id', 'desc')->get()->toarray();
-
-        if (!empty($Sale_order)) {
-
-            $order = [];
-
-            for ($i = 0; $i < count($Sale_order); $i++) {
-                $Sale_order[$i]['No'] = $i + 1;
-
-                $saleOrderLine = Sale_order_line::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
-                $Sale_order[$i]['qty_sale_order'] = intval($saleOrderLine);
-
-                //$qtySaleOrderJob = Qty_sale_order_job::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
-
-                // $Sale_order[$i]['qty_sale_order_job'] = intval($qtySaleOrderJob);
-
-                // $Sale_order[$i]['result'] = intval($saleOrderLine) - intval($qtySaleOrderJob);
-
-                $Sale_order[$i]['result'] = intval($saleOrderLine);
-
-                //check result > 0
-                if ($Sale_order[$i]['result'] > 0) {
-                    $order[] = $Sale_order[$i];
-                }
-            }
-        }
-        return $this->returnSuccess('Successful', $order);
-    }
-
-    public function getSaleOrderApprovePage(Request $request)
-    {
-
-        $columns = $request->columns;
-        $length = $request->length;
-        $order = $request->order;
-        $search = $request->search;
-        $start = $request->start;
-        $page = $start / $length + 1;
-
-        $col = array('id', 'order_id', 'item_id', 'del_date', 'customer_id', 'user_id');
-
-        $D = Sale_order::select($col)
-            ->with('item_code')
-            ->with('customer')
-            ->with('user')
-            ->where('status', 'Approved');
-
-        $d = $D->orderby($col[$order[0]['column']], $order[0]['dir']);
-
-        if ($search['value'] != '' && $search['value'] != null) {
-
-            //search datatable
-            $d->where(function ($query) use ($search, $col) {
-                foreach ($col as &$c) {
-                    $query->orWhere($c, 'like', '%' . $search['value'] . '%');
-                }
-            });
-        }
-
-        $d = $d->paginate($length, ['*'], 'page', $page);
-
-        if ($d->isNotEmpty()) {
-
-            //run no
-            $No = (($page - 1) * $length);
-
-            $order = [];
-
-            for ($i = 0; $i < count($d); $i++) {
-
-                $No = $No + 1;
-                $d[$i]->No = $No;
-
-                $saleOrderLine = Sale_order_line::where('sale_order_id', $d[$i]->id)->sum('qty');
-                $d[$i]->qty_sale_order = intval($saleOrderLine);
-
-                //$qtySaleOrderJob = Qty_sale_order_job::where('sale_order_id', $d[$i]->id)->sum('qty');
-                //$d[$i]->qty_sale_order_job = intval($qtySaleOrderJob);
-
-                //$d[$i]->result = intval($saleOrderLine) - intval($qtySaleOrderJob);
-                $d[$i]->result = intval($saleOrderLine);
-            }
-        }
-
-        return $this->returnSuccess('Successful', $d);
-    }
-
     public function getSaleOrderLineByItem(Request $request)
     {
 
@@ -159,30 +70,6 @@ class SaleOrderController extends Controller
         return $this->returnSuccess('Successful', $Sale_order);
     }
 
-    public function getSaleOrderOpenJob(Request $request)
-    {
-
-        $itemId = $request->item_id;
-
-        $Sale_order = Sale_order::with('item_code')
-            ->where('item_id', $itemId)
-            ->where('status', 'Approved')
-            ->get()
-            ->toarray();
-
-        if (!empty($Sale_order)) {
-
-            for ($i = 0; $i < count($Sale_order); $i++) {
-                $Sale_order[$i]['No'] = $i + 1;
-
-                $saleOrderLine = Sale_order_line::where('sale_order_id', $Sale_order[$i]['id'])->sum('qty');
-                $Sale_order[$i]['qty_sale_order'] = intval($saleOrderLine);
-
-            }
-        }
-
-        return $this->returnSuccess('Successful', $Sale_order);
-    }
 
     public function SaleOrderPage(Request $request)
     {
@@ -345,8 +232,6 @@ class SaleOrderController extends Controller
 
         try {
 
-
-
             if ($checkName) {
 
                 //dd(new Customer());
@@ -360,7 +245,7 @@ class SaleOrderController extends Controller
                 if ($request->payment_type  == 'COD') {
 
 
-                    $Sale_order->order_id = $this->getLastNumber(5);
+                    $Sale_order->order_id = $this->getLastNumber(3);
 
                     //run number
                     $this->setRunDoc(5, $Sale_order->order_id);
@@ -392,7 +277,7 @@ class SaleOrderController extends Controller
                     $Sale_order->Customer;
                 } else if ($request->payment_type  == 'transfer') {
 
-                    $Sale_order->order_id = $this->getLastNumber(5);
+                    $Sale_order->order_id = $this->getLastNumber(3);
 
                     //run number
                     $this->setRunDoc(5, $Sale_order->order_id);
@@ -424,28 +309,19 @@ class SaleOrderController extends Controller
                     $Sale_order->Customer;
                 }
 
-                //add Withdraw
-
-                //$Item_trans=[];
-
 
                 for ($i = 0; $i < count($Order); $i++) {
 
                     //stock Count
-                    $stockCount = $this->getStockCount($Order[$i]['item_id'], []);
+                    $stockCount = $this->getStockCount($Order[$i]['item_id'], $Order[$i]['item_attribute_id'], $Order[$i]['item_attribute_second_id']);
                     if (abs($Order[$i]['qty']) > $stockCount) {
                         return $this->returnErrorData('Not enough item', 404);
                     }
-
-                    $Order[$i]['item_id'] = $Order[$i]['item_id'];
-
-                    // dd($Order[$i]['item_id']);
 
                     $Order[$i]['sale_order_id'] = $Sale_order->id;
 
                     //$Order[$i]['seq'] = $i + 1;
                     $Order[$i]['unit_price'] = floatval($Order[$i]['unit_price']);
-
 
                     //dd($Order[$i]['unit_price']);
                     $Order[$i]['create_by'] = $loginBy->user_id;
@@ -463,19 +339,15 @@ class SaleOrderController extends Controller
                     $Item = Item::where('id', $Order[$i]['item_id'])->first();
 
 
-                    $stockCount = $this->getStockCount($Order[$i]['item_id']);
-
-                    //  $stockCount = $this->getStockCount($Order[$i]['item_id'], [$Item->location_id]);
+                    $stockCount = $this->getStockCount($Order[$i]['item_id'], $Order[$i]['item_attribute_id'], $Order[$i]['item_attribute_second_id']);
 
                     if (abs($qty) > $stockCount) {
                         return $this->returnErrorData('Not enough item', 404);
                     }
 
-
                     $Item_trans->sale_order_id = $Sale_order->id;
                     $Item_trans->item_id = $Item->id;
                     $Item_trans->qty = $qty;
-
 
                     $Item_trans->customer_id = $Customer->id;
 
@@ -487,17 +359,7 @@ class SaleOrderController extends Controller
                     $Item_trans->type = 'Withdraw';
                     $Item_trans->create_by = $loginBy->user_id;
 
-
                     $Item_trans->save();
-
-
-
-
-                    //$Item_Line = Item_line::where('id', $Order[$i]['item_id'])->first();
-                    // dd($Item_Line);
-                    //stock Count
-
-
 
 
                     //add customer_line
@@ -519,8 +381,6 @@ class SaleOrderController extends Controller
                         }
                     }
                 }
-
-
 
                 //add order line
                 DB::table('sale_order_line')->insert($Order);
@@ -561,7 +421,7 @@ class SaleOrderController extends Controller
                 //add order
                 $Sale_order = new Sale_order();
 
-                $Sale_order->order_id = $this->getLastNumber(5);
+                $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
                 $this->setRunDoc(5, $Sale_order->order_id);
@@ -604,14 +464,11 @@ class SaleOrderController extends Controller
                 for ($i = 0; $i < count($Order); $i++) {
 
                     //stock Count
-                    $stockCount = $this->getStockCount($Order[$i]['item_id'], []);
+                    $stockCount = $this->getStockCount($Order[$i]['item_id'], $Order[$i]['item_attribute_id'], $Order[$i]['item_attribute_second_id']);
+
                     if (abs($Order[$i]['qty']) > $stockCount) {
                         return $this->returnErrorData('Not enough item', 404);
                     }
-
-                    $Order[$i]['item_id'] = $Order[$i]['item_id'];
-
-                    // dd($Order[$i]['item_id']);
 
                     $Order[$i]['sale_order_id'] = $Sale_order->id;
 
@@ -626,8 +483,6 @@ class SaleOrderController extends Controller
 
 
 
-
-
                     $Item_trans = new Item_trans();
 
                     //qty withdraw
@@ -635,9 +490,9 @@ class SaleOrderController extends Controller
 
 
                     $Item = Item::where('id', $Order[$i]['item_id'])->first();
-                    // dd($Item);
+
                     //stock Count
-                    $stockCount = $this->getStockCount($Order[$i]['item_id']);
+                    $stockCount = $this->getStockCount($Order[$i]['item_id'], $Order[$i]['item_attribute_id'], $Order[$i]['item_attribute_second_id']);
 
                     if (abs($qty) > $stockCount) {
                         return $this->returnErrorData('สินค้าใน stock ไม่พอเบิกออก', 404);
@@ -811,7 +666,8 @@ class SaleOrderController extends Controller
             for ($i = 0; $i < count($Order); $i++) {
 
                 //stock Count
-                $stockCount = $this->getStockCount($Order[$i]['item_id'], []);
+                $stockCount = $this->getStockCount($Order[$i]['item_id'], $Order[$i]['item_attribute_id'], $Order[$i]['item_attribute_second_id']);
+
 
                 if (abs($Order[$i]['qty']) > $stockCount) {
                     return $this->returnErrorData('Not enough item', 404);
@@ -1143,7 +999,7 @@ class SaleOrderController extends Controller
 
     //                 //add sale order
     //                 $Sale_order = new Sale_order();
-    //                 $Sale_order->order_id = $this->getLastNumber(5);
+    //                 $Sale_order->order_id = $this->getLastNumber(3);
 
     //                 //run number
     //                 $this->setRunDoc(5, $Sale_order->order_id);
@@ -1288,261 +1144,261 @@ class SaleOrderController extends Controller
     public function addOrderFromLine($bot_msg)
     {
 
-        $sale_id = "";
-        $name = "";
-        $phone = "";
-        $address = "";
-        $product = "";
-        $qty = "";
-        $price = "";
+        // $sale_id = "";
+        // $name = "";
+        // $phone = "";
+        // $address = "";
+        // $product = "";
+        // $qty = "";
+        // $price = "";
 
-        $msg = explode(':', $bot_msg);
+        // $msg = explode(':', $bot_msg);
 
-        $ms = explode(',', $msg[1]);
-        $sale_id = $ms[0];
-        $ms = explode(',', $msg[2]);
-        $name = $ms[0];
-        $ms = explode(',', $msg[3]);
-        $phone = $ms[0];
-        $ms = explode(',', $msg[4]);
-        $address = $ms[0];
-        $ms = explode(',', $msg[5]);
-        $item = $ms[0];
-        $ms = explode(',', $msg[5]);
-        $qty = $ms[0];
-        $ms = explode(',', $msg[6]);
-        $price = $ms[0];
-        // $ms = explode(',', $msg[7]);
+        // $ms = explode(',', $msg[1]);
+        // $sale_id = $ms[0];
+        // $ms = explode(',', $msg[2]);
+        // $name = $ms[0];
+        // $ms = explode(',', $msg[3]);
+        // $phone = $ms[0];
+        // $ms = explode(',', $msg[4]);
+        // $address = $ms[0];
+        // $ms = explode(',', $msg[5]);
+        // $item = $ms[0];
+        // $ms = explode(',', $msg[5]);
+        // $qty = $ms[0];
+        // $ms = explode(',', $msg[6]);
+        // $price = $ms[0];
+        // // $ms = explode(',', $msg[7]);
 
 
-        $checkName = Customer::where('phone', $phone)->first();
-        $sale = User::where('user_id', $sale_id)->first();
-        $product = Item::where('item_id', $item)->first();
+        // $checkName = Customer::where('phone', $phone)->first();
+        // $sale = User::where('user_id', $sale_id)->first();
+        // $product = Item::where('item_id', $item)->first();
 
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
 
-        try {
+        // try {
 
-            if ($checkName) {
+        //     if ($checkName) {
 
-                //add order
-                $Sale_order = new Sale_order();
-                $Customer = $checkName;
+        //         //add order
+        //         $Sale_order = new Sale_order();
+        //         $Customer = $checkName;
 
-                $Sale_order->order_id = $this->getLastNumber(5);
+        //         $Sale_order->order_id = $this->getLastNumber(3);
 
-                //run number
-                $this->setRunDoc(5, $Sale_order->order_id);
-                $Sale_order->date_time = date('Y-m-d');
-                $Sale_order->customer_id = $Customer->customer_id;
-                $Sale_order->delivery_by_id = 1;
-                $Sale_order->channal = "facebook";
-                $Sale_order->name = $Customer->name;
-                $Sale_order->sale_id = $sale->id;
-                $Sale_order->telephone = $phone;
-                $Sale_order->email = $Customer->email;
-                $Sale_order->address = $address;
-                $Sale_order->shipping_price = 0;
-                $Sale_order->cod_price_surcharge = 0;
+        //         //run number
+        //         $this->setRunDoc(5, $Sale_order->order_id);
+        //         $Sale_order->date_time = date('Y-m-d');
+        //         $Sale_order->customer_id = $Customer->customer_id;
+        //         $Sale_order->delivery_by_id = 1;
+        //         $Sale_order->channal = "facebook";
+        //         $Sale_order->name = $Customer->name;
+        //         $Sale_order->sale_id = $sale->id;
+        //         $Sale_order->telephone = $phone;
+        //         $Sale_order->email = $Customer->email;
+        //         $Sale_order->address = $address;
+        //         $Sale_order->shipping_price = 0;
+        //         $Sale_order->cod_price_surcharge = 0;
 
-                $Sale_order->vat = 0;
-                $Sale_order->total = floatval($qty) * floatval($price);
-                $Sale_order->status = "order";
-                $Sale_order->customer_id = $Customer->id;
-                // dd($Sale_order->status);
-                $Sale_order->payment_type = "COD";
-                $Sale_order->create_by = $sale->user_id;
-                $Sale_order->save();
-                $Sale_order->Customer;
+        //         $Sale_order->vat = 0;
+        //         $Sale_order->total = floatval($qty) * floatval($price);
+        //         $Sale_order->status = "order";
+        //         $Sale_order->customer_id = $Customer->id;
+        //         // dd($Sale_order->status);
+        //         $Sale_order->payment_type = "COD";
+        //         $Sale_order->create_by = $sale->user_id;
+        //         $Sale_order->save();
+        //         $Sale_order->Customer;
 
 
 
-                //stock Count
-                $stockCount = $this->getStockCount($product->id, []);
+        //         //stock Count
+        //         $stockCount = $this->getStockCount($product->id, []);
 
-                if (abs($qty) > $stockCount) {
-                    return false;
-                }
+        //         if (abs($qty) > $stockCount) {
+        //             return false;
+        //         }
 
-                $Order[0]['item_id'] = $product->item_id;
+        //         $Order[0]['item_id'] = $product->item_id;
 
 
-                $Order[0]['sale_order_id'] = $Sale_order->id;
-                $unit_price = $price / $qty;
-                $Order[0]['unit_price'] = floatval($unit_price);
+        //         $Order[0]['sale_order_id'] = $Sale_order->id;
+        //         $unit_price = $price / $qty;
+        //         $Order[0]['unit_price'] = floatval($unit_price);
 
 
-                $Order[0]['create_by'] = $sale->user_id;
-                $Order[0]['created_at'] = Carbon::now()->toDateTimeString();
-                $Order[0]['updated_at'] = Carbon::now()->toDateTimeString();
+        //         $Order[0]['create_by'] = $sale->user_id;
+        //         $Order[0]['created_at'] = Carbon::now()->toDateTimeString();
+        //         $Order[0]['updated_at'] = Carbon::now()->toDateTimeString();
 
 
 
-                $Item_trans = new Item_trans();
+        //         $Item_trans = new Item_trans();
 
-                //qty withdraw
-                $qty = -$Order[0]['qty'];
+        //         //qty withdraw
+        //         $qty = -$Order[0]['qty'];
 
 
-                $Item = Item::where('id', $Order[0]['item_id'])->first();
+        //         $Item = Item::where('id', $Order[0]['item_id'])->first();
 
 
-                $stockCount = $this->getStockCount($Order[0]['item_id'], []);
+        //         $stockCount = $this->getStockCount($Order[0]['item_id'], []);
 
 
-                if (abs($qty) > $stockCount) {
-                    return false;
-                }
+        //         if (abs($qty) > $stockCount) {
+        //             return false;
+        //         }
 
 
-                $Item_trans->sale_order_id = $Sale_order->id;
-                $Item_trans->item_id = $Item->id;
-                $Item_trans->qty = $qty;
+        //         $Item_trans->sale_order_id = $Sale_order->id;
+        //         $Item_trans->item_id = $Item->id;
+        //         $Item_trans->qty = $qty;
 
 
 
-                $Item_trans->customer_id = $Customer->id;
+        //         $Item_trans->customer_id = $Customer->id;
 
-                $Item_trans->stock = $stockCount;
-                $Item_trans->balance = $stockCount - abs($qty);
-                $Item_trans->status = 1;
-                $Item_trans->operation = 'booking';
-                $Item_trans->date = date('Y-m-d');
-                $Item_trans->type = 'Withdraw';
-                $Item_trans->create_by = $sale->user_id;
+        //         $Item_trans->stock = $stockCount;
+        //         $Item_trans->balance = $stockCount - abs($qty);
+        //         $Item_trans->status = 1;
+        //         $Item_trans->operation = 'booking';
+        //         $Item_trans->date = date('Y-m-d');
+        //         $Item_trans->type = 'Withdraw';
+        //         $Item_trans->create_by = $sale->user_id;
 
 
-                $Item_trans->save();
+        //         $Item_trans->save();
 
-                //add customer_line
-                $Customer_line = new CustomerLine();
+        //         //add customer_line
+        //         $Customer_line = new CustomerLine();
 
-                $Customer_line->customer_id = $Customer->id;
+        //         $Customer_line->customer_id = $Customer->id;
 
-                $Customer_line->address = $address;
+        //         $Customer_line->address = $address;
 
-                $Customer_line->save();
+        //         $Customer_line->save();
 
-                //add order line
-                DB::table('sale_order_line')->insert($Order);
+        //         //add order line
+        //         DB::table('sale_order_line')->insert($Order);
 
 
-                //log
-                $userId = $sale->user_id;
-                $type = 'ขายสินค้า';
-                $description = 'User' . $userId . ' has ' . $type;
-                $this->LogSaleOrder($userId, $description, $type);
+        //         //log
+        //         $userId = $sale->user_id;
+        //         $type = 'ขายสินค้า';
+        //         $description = 'User' . $userId . ' has ' . $type;
+        //         $this->LogSaleOrder($userId, $description, $type);
 
-                DB::commit();
+        //         DB::commit();
 
-                return true;
-            } else {
+        //         return true;
+        //     } else {
 
-                $Customer = new Customer();
+        //         $Customer = new Customer();
 
-                $Customer->name = $name;
-                $Customer->phone = $phone;
-                $Customer->email = "";
-                $Customer->create_by = $sale->user_id;
-                $Customer->save();
+        //         $Customer->name = $name;
+        //         $Customer->phone = $phone;
+        //         $Customer->email = "";
+        //         $Customer->create_by = $sale->user_id;
+        //         $Customer->save();
 
-                $CustomerLine = new CustomerLine();
-                $CustomerLine->address = $address;
-                $CustomerLine->customer_id = $Customer->id;
-                $CustomerLine->save();
+        //         $CustomerLine = new CustomerLine();
+        //         $CustomerLine->address = $address;
+        //         $CustomerLine->customer_id = $Customer->id;
+        //         $CustomerLine->save();
 
-                // //add order
-                $Sale_order = new Sale_order();
+        //         // //add order
+        //         $Sale_order = new Sale_order();
 
-                $Sale_order->order_id = $this->getLastNumber(5);
+        //         $Sale_order->order_id = $this->getLastNumber(3);
 
-                // //run number
-                $this->setRunDoc(5, $Sale_order->order_id);
+        //         // //run number
+        //         $this->setRunDoc(5, $Sale_order->order_id);
 
-                $Sale_order->date_time = date('Y-m-d');
-                $Sale_order->customer_id = $Customer->id;
-                $Sale_order->delivery_by_id = 1;
-                $Sale_order->channal = "facebook";
-                $Sale_order->name = $name;
-                $Sale_order->sale_id = $sale->id;
+        //         $Sale_order->date_time = date('Y-m-d');
+        //         $Sale_order->customer_id = $Customer->id;
+        //         $Sale_order->delivery_by_id = 1;
+        //         $Sale_order->channal = "facebook";
+        //         $Sale_order->name = $name;
+        //         $Sale_order->sale_id = $sale->id;
 
-                $Sale_order->telephone = $phone;
-                $Sale_order->email = "";
-                $Sale_order->address = $address;
-                $Sale_order->shipping_price = 0;
-                $Sale_order->cod_price_surcharge = 0;
-                $Sale_order->vat = 0;
-                $Sale_order->total = floatval($qty) * floatval($price);
-                $Sale_order->status = "order";
-                $Sale_order->payment_type = "COD";
-                $Sale_order->create_by = $sale->user_id;
-                $Sale_order->save();
-                // $Sale_order->Customer;
+        //         $Sale_order->telephone = $phone;
+        //         $Sale_order->email = "";
+        //         $Sale_order->address = $address;
+        //         $Sale_order->shipping_price = 0;
+        //         $Sale_order->cod_price_surcharge = 0;
+        //         $Sale_order->vat = 0;
+        //         $Sale_order->total = floatval($qty) * floatval($price);
+        //         $Sale_order->status = "order";
+        //         $Sale_order->payment_type = "COD";
+        //         $Sale_order->create_by = $sale->user_id;
+        //         $Sale_order->save();
+        //         // $Sale_order->Customer;
 
 
-                //stock Count
-                $stockCount = $this->getStockCount($product->id, []);
-                // if (abs($qty) > $stockCount) {
-                //     return false;
-                // }
+        //         //stock Count
+        //         $stockCount = $this->getStockCount($product->id, []);
+        //         // if (abs($qty) > $stockCount) {
+        //         //     return false;
+        //         // }
 
-                // $Order[0]['item_id'] = $product->item_id;
+        //         // $Order[0]['item_id'] = $product->item_id;
 
 
-                // $Order[0]['sale_order_id'] = $Sale_order->id;
-                // $unit_price = $price / $qty;
-                // $Order[0]['unit_price'] = floatval($unit_price);
+        //         // $Order[0]['sale_order_id'] = $Sale_order->id;
+        //         // $unit_price = $price / $qty;
+        //         // $Order[0]['unit_price'] = floatval($unit_price);
 
 
-                // $Order[0]['create_by'] = $sale->user_id;
-                // $Order[0]['created_at'] = Carbon::now()->toDateTimeString();
-                // $Order[0]['updated_at'] = Carbon::now()->toDateTimeString();
+        //         // $Order[0]['create_by'] = $sale->user_id;
+        //         // $Order[0]['created_at'] = Carbon::now()->toDateTimeString();
+        //         // $Order[0]['updated_at'] = Carbon::now()->toDateTimeString();
 
 
 
-                // $Item_trans = new Item_trans();
+        //         // $Item_trans = new Item_trans();
 
-                // //qty withdraw
-                // $qty = -$Order[0]['qty'];
+        //         // //qty withdraw
+        //         // $qty = -$Order[0]['qty'];
 
 
-                // $Item = Item::where('id', $Order[0]['item_id'])->first();
+        //         // $Item = Item::where('id', $Order[0]['item_id'])->first();
 
-                // $Item_trans->sale_order_id = $Sale_order->id;
-                // $Item_trans->item_id = $Item->id;
-                // $Item_trans->qty = $qty;
+        //         // $Item_trans->sale_order_id = $Sale_order->id;
+        //         // $Item_trans->item_id = $Item->id;
+        //         // $Item_trans->qty = $qty;
 
 
 
-                // $Item_trans->customer_id = $Customer->id;
+        //         // $Item_trans->customer_id = $Customer->id;
 
-                // $Item_trans->stock = $stockCount;
-                // $Item_trans->balance = $stockCount - abs($qty);
-                // $Item_trans->status = 1;
-                // $Item_trans->operation = 'booking';
-                // $Item_trans->date = date('Y-m-d');
-                // $Item_trans->type = 'Withdraw';
-                // $Item_trans->create_by = $sale->user_id;
+        //         // $Item_trans->stock = $stockCount;
+        //         // $Item_trans->balance = $stockCount - abs($qty);
+        //         // $Item_trans->status = 1;
+        //         // $Item_trans->operation = 'booking';
+        //         // $Item_trans->date = date('Y-m-d');
+        //         // $Item_trans->type = 'Withdraw';
+        //         // $Item_trans->create_by = $sale->user_id;
 
 
-                // $Item_trans->save();
+        //         // $Item_trans->save();
 
-                // //add order line
-                // DB::table('sale_order_line')->insert($Order);
+        //         // //add order line
+        //         // DB::table('sale_order_line')->insert($Order);
 
 
 
-                DB::commit();
+        //         DB::commit();
 
-                return true;
-            }
-        } catch (\Throwable $e) {
+        //         return true;
+        //     }
+        // } catch (\Throwable $e) {
 
-            DB::rollback();
+        //     DB::rollback();
 
-            return false;
-        }
+        //     return false;
+        // }
     }
 
     public function lineBot()
@@ -1699,7 +1555,7 @@ class SaleOrderController extends Controller
                 $Sale_order = new Sale_order();
                 $Customer = $checkName;
 
-                $Sale_order->order_id = $this->getLastNumber(5);
+                $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
                 $this->setRunDoc(5, $Sale_order->order_id);
@@ -1814,7 +1670,7 @@ class SaleOrderController extends Controller
                 //add order
                 $Sale_order = new Sale_order();
 
-                $Sale_order->order_id = $this->getLastNumber(5);
+                $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
                 $this->setRunDoc(5, $Sale_order->order_id);
