@@ -39,11 +39,18 @@ class Item_trans extends Model
         return $this->belongsTo(Item::class);
     }
 
-    public function sale_orders()
+    public function item_attribute()
     {
-        return $this->hasMany(Sale_order::class);
+        return $this->belongsTo(Item_attribute::class);
     }
-    public function sale_order2()
+
+    public function item_attribute_second()
+    {
+        return $this->belongsTo(Item_attribute_second::class);
+    }
+
+
+    public function sale_order()
     {
         return $this->belongsTo(Sale_order::class, 'sale_order_id', 'id');
     }
@@ -60,52 +67,6 @@ class Item_trans extends Model
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
-    }
-
-
-    public function lot_trans()
-    {
-        return $this->hasMany(Lot_trans::class);
-    }
-
-    public function unit_convertion()
-    {
-        return $this->belongsTo(Unit_convertion::class);
-    }
-
-    public function qc_incoming_receive_mat_lines()
-    {
-        return $this->hasMany(Qc_incoming_receive_mat_line::class);
-    }
-
-    public function job()
-    {
-        return $this->belongsTo(Job::class);
-    }
-
-    public function job_trans()
-    {
-        return $this->belongsTo(Job_trans::class);
-    }
-
-    public function delevery_order()
-    {
-        return $this->belongsTo(Delevery_order::class);
-    }
-
-    public function qc()
-    {
-        return $this->belongsTo(Qc::class);
-    }
-
-    public function qc_defect()
-    {
-        return $this->belongsTo(Qc_defect::class);
-    }
-
-    public function qc_incoming_receive_mat()
-    {
-        return $this->belongsTo(Qc_incoming_receive_mat::class);
     }
 
 }

@@ -85,7 +85,7 @@ class CheckoutController extends Controller
                 for ($i = 0; $i < count($sale_orders); $i++) {
 
 
-                    $sale_orders[$i]['order_id'] = $this->getLastNumber(5);
+                    $sale_orders[$i]['order_id'] = $this->getLastNumber(3);
                     //run number
                     $this->setRunDoc(5, $sale_orders[$i]['order_id']);
 
@@ -109,7 +109,7 @@ class CheckoutController extends Controller
 
                 // //     $Sale_page_line->save();
 
-                // // } 
+                // // }
                 // //add Item line
                 DB::table('sale_order')->insert($sale_orders);
 
@@ -140,57 +140,57 @@ class CheckoutController extends Controller
         DB::beginTransaction();
 
         try {
-           
-            
+
+
             $Checkout = Checkout::find($id);
-            
+
             $Checkout->text = $request->text;
             $Checkout->discount = $request->discount;
             $Checkout->qty = $request->qty;
             $Checkout->price = $request->price;
-            
+
             $Checkout->updated_at = Carbon::now()->toDateTimeString();
             $Checkout->save();
-            
+
             // $sale_order = new Sale_order();
             // $sale_order->channal = "SP";
 
-            // $sale_orders->order_id = $this->getLastNumber(5);
+            // $sale_orders->order_id = $this->getLastNumber(3);
             // //run number
             // $this->setRunDoc(5, $sale_orders->order_id);
             // $sale_order->save();
-          
 
-            
+
+
             // $Item_trans = new Item_trans();
             // //qty withdraw
             // $qty = -$sale_order_line->qty;
-           
+
             // $Item = Item::where('id', $sale_order_line->item_id)->first();
 
 
             // $stockCount = $this->getStockCount($sale_order_line->item_id, []);
 
-           
+
             // //  $stockCount = $this->getStockCount($Order[$i]['item_id'], [$Item->location_id]);
 
             // if (abs($qty) > $stockCount) {
             //     return $this->returnErrorData('Not enough item', 404);
             // }
 
-        //     $Item_trans->sale_order_id = $sale_order_line->id;
-        //     $Item_trans->item_id = $Item->id;
-        //     $Item_trans->qty = $qty;
+            //     $Item_trans->sale_order_id = $sale_order_line->id;
+            //     $Item_trans->item_id = $Item->id;
+            //     $Item_trans->qty = $qty;
 
-        //     $Item_trans->location_1_id = $Item->location_id;
-        //    // $Item_trans->customer_id = $Customer->id;
-        //     $Item_trans->stock = $stockCount;
-        //     $Item_trans->balance = $stockCount - abs($qty);
-        //     $Item_trans->status = 1;
-        //     $Item_trans->operation = 'booking';
-        //     $Item_trans->date = $request->date_time;
-        //     $Item_trans->type = 'Withdraw';
-        //     $Item_trans->save();
+            //     $Item_trans->location_1_id = $Item->location_id;
+            //    // $Item_trans->customer_id = $Customer->id;
+            //     $Item_trans->stock = $stockCount;
+            //     $Item_trans->balance = $stockCount - abs($qty);
+            //     $Item_trans->status = 1;
+            //     $Item_trans->operation = 'booking';
+            //     $Item_trans->date = $request->date_time;
+            //     $Item_trans->type = 'Withdraw';
+            //     $Item_trans->save();
 
 
 
@@ -198,7 +198,7 @@ class CheckoutController extends Controller
             for ($i = 0; $i < count($sale_orders); $i++) {
 
 
-                $sale_orders[$i]['order_id'] = $this->getLastNumber(5);
+                $sale_orders[$i]['order_id'] = $this->getLastNumber(3);
                 //run number
                 $this->setRunDoc(5, $sale_orders[$i]['order_id']);
 
@@ -219,13 +219,13 @@ class CheckoutController extends Controller
                 $sale_order_line = new sale_order_line();
                 $sale_order_line->item_id = $Checkout->item_id;
                 $sale_order_line->qty = $Checkout->qty;
-               // $sale_order_line->sale_order_id = $sale_order->id;
+                // $sale_order_line->sale_order_id = $sale_order->id;
                 $sale_order_line->unit_price = $Checkout->price;
                 $sale_order_line->discount = $Checkout->discount;
                 $sale_order_line->save();
-    
+
                 //stock Count
-                $stockCount = $this->getStockCount($sale_order_line->item_id, []);
+                $stockCount = $this->getStockCount($sale_order_line->item_id, null, null);
                 if (abs($sale_order_line->qty) > $stockCount) {
                     return $this->returnErrorData('สินค้าใน stock ไม่พอ', 404);
                 }
@@ -257,7 +257,7 @@ class CheckoutController extends Controller
 
 
 
-            // } 
+            // }
             // //add Item line
             DB::table('sale_order')->insert($sale_orders);
             // DB::table('sale_order_line')->insert($sale_order_line);

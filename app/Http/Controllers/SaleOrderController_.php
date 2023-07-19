@@ -333,7 +333,7 @@ class SaleOrderController extends Controller
                 if ($request->payment_type  == 'COD') {
 
 
-                    $Sale_order->order_id = $this->getLastNumber(5);
+                    $Sale_order->order_id = $this->getLastNumber(3);
 
                     //run number
                     $this->setRunDoc(5, $Sale_order->order_id);
@@ -365,7 +365,7 @@ class SaleOrderController extends Controller
                     $Sale_order->Customer;
                 } else if ($request->payment_type  == 'transfer') {
 
-                    $Sale_order->order_id = $this->getLastNumber(5);
+                    $Sale_order->order_id = $this->getLastNumber(3);
 
                     //run number
                     $this->setRunDoc(5, $Sale_order->order_id);
@@ -535,7 +535,7 @@ class SaleOrderController extends Controller
                 //add order
                 $Sale_order = new Sale_order();
 
-                $Sale_order->order_id = $this->getLastNumber(5);
+                $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
                 $this->setRunDoc(5, $Sale_order->order_id);
@@ -1103,7 +1103,7 @@ class SaleOrderController extends Controller
 
     //                 //add sale order
     //                 $Sale_order = new Sale_order();
-    //                 $Sale_order->order_id = $this->getLastNumber(5);
+    //                 $Sale_order->order_id = $this->getLastNumber(3);
 
     //                 //run number
     //                 $this->setRunDoc(5, $Sale_order->order_id);

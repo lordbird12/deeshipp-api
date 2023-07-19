@@ -14,7 +14,7 @@ class ItemLineController extends Controller
 
     public function ItemLineupdate (Request $request)
     {
-       
+
         $loginBy = $request->login_by;
 
         if (!isset($request->id)) {
@@ -30,7 +30,7 @@ class ItemLineController extends Controller
             $id = $request->id;
             $Item_line = Item_line::find($id);
 
-            
+
 
             $Item_line->item_id = $request->item_id;
 
@@ -38,7 +38,7 @@ class ItemLineController extends Controller
             $Item_line->qty = $request->qty;
             $Item_line->price = $request->price;
             $Item_line->total = $request->total;
-            
+
             //$Bank->update_by = $loginBy->user_id;
             $Item_line->updated_at = Carbon::now()->toDateTimeString();
             $Item_line->save();
@@ -77,18 +77,18 @@ class ItemLineController extends Controller
         if (!empty($Item)) {
 
             //qty item
-            $Item->qty = $this->getStockCount($Item->id, []);
+            $Item->qty = $this->getStockCount($Item->item_id, null, null);
         }
 
         return $this->returnSuccess('Successful', $Item);
     }
 
-   
+
 
     //
     public function getItem_line()
     {
-       
+
         $Item_line = Item_line::get()->toarray();
 
         if (!empty($Item_line)) {
@@ -108,11 +108,11 @@ class ItemLineController extends Controller
         $item_line = $request->item_line;
         $loginBy = $request->login_by;
 
-       
-        
+
+
         if (empty($item_line)) {
             return $this->returnErrorData('[item_line] Data Not Found', 404);
-        
+
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
@@ -124,11 +124,11 @@ class ItemLineController extends Controller
             //add item_line
             for ($i = 0; $i<  count($item_line); $i++) {
 
-         
+
                 $itemLine[$i]['item_id'] = $item_line[$i]['item_id'];
                 $itemLine[$i]['type'] = $item_line[$i]['type'];
                 $itemLine[$i]['price'] =$item_line[$i]['price']; //inv no
-                $itemLine[$i]['qty'] = $item_line[$i]['qty']; 
+                $itemLine[$i]['qty'] = $item_line[$i]['qty'];
                // $itemLine[$i]['create_by'] = $loginBy->user_id;
                 $itemLine[$i]['created_at'] = Carbon::now()->toDateTimeString();
                 $itemLine[$i]['updated_at'] = Carbon::now()->toDateTimeString();
@@ -136,7 +136,7 @@ class ItemLineController extends Controller
             }
 
             DB::table('item_lines')->insert($itemLine);
-           
+
 
             DB::commit();
 

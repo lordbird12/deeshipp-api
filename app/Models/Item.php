@@ -37,9 +37,9 @@ class Item extends Model
     }
 
     //////////////////////////////////////// relation //////////////////////////////////////
-    public  function user_create ()
+    public  function user_create()
     {
-        return $this->belongsTo(User::class,'create_by','user_id');
+        return $this->belongsTo(User::class, 'create_by', 'user_id');
     }
 
     public function item_type()
@@ -52,52 +52,35 @@ class Item extends Model
         return $this->hasMany(Item_trans::class);
     }
 
+    public function item_images()
+    {
+        return $this->hasMany(Item_image::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-
-
-    //unit
-    public function unit_store()
+    public function item_attributes()
     {
-        return $this->belongsTo(Unit::class, 'unit_store_id', 'id');
+        return $this->hasMany(Item_attribute::class);
     }
 
-    public function unit_buy()
+    public function item_attribute_seconds()
     {
-        return $this->belongsTo(Unit::class, 'unit_buy_id', 'id');
+        return $this->hasMany(Item_attribute_second::class);
     }
 
-    public function unit_sell()
+
+
+
+    //item_line
+    public function item_lines()
     {
-        return $this->belongsTo(Unit::class, 'unit_sell_id', 'id');
+        return $this->hasMany(Item_line::class, 'item_id', 'id');
     }
-    //
 
-
-
-     //item_line
-     public function item_line()
-     {
-         return $this->belongsTo(Item_line::class,'item_id','id');
-     }
-
-     public function main_itemLine()
-     {
-         return $this->hasMany(Item_line::class,'main_item_id','id');
-     }
-
-
-
-
-    //spare
-    public function Spare_type()
-    {
-        return $this->belongsTo(Spare_type::class);
-    }
-    //
 
     //sale order line
     public function sale_order_lines()
@@ -105,56 +88,13 @@ class Item extends Model
         return $this->hasMany(Sale_order_line::class);
     }
 
-    public function forcash_lines()
-    {
-        return $this->hasMany(Forcash_line::class);
-    }
 
-    //bom
-    public function bom()
+    //vendor
+    public function vendor()
     {
-        return $this->hasMany(Bom::class);
+        return $this->belongsTo(Vendor::class);
     }
-
-    public function bom_lines()
-    {
-        return $this->hasMany(Bom_line::class);
-    }
-
-    //job
-    public function job_trans()
-    {
-        return $this->hasMany(Job_trans::class);
-    }
-
-    public function wips()
-    {
-        return $this->hasMany(Wip::class);
-    }
-
-    //mrp
-    public function pre_material_request_lines()
-    {
-        return $this->hasMany(Pre_material_request_line::class);
-    }
-
-    public function material_request_report_lines()
-    {
-        return $this->hasMany(Material_request_report_line::class);
-    }
-
-    //qc
-    public function qc_outgoing_lines()
-    {
-        return $this->hasMany(Qc_outgoing_line::class);
-    }
-
-     //vendor
-     public function vendor()
-     {
-         return $this->belongsTo(Vendor::class);
-     }
-     //
+    //
 
 
 

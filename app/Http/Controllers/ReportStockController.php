@@ -18,41 +18,6 @@ class ReportStockController extends Controller
 {
 
 
-
-
-
-    public function getReportStockByType(Request $request)
-    {
-
-        $type = $request->type;
-
-        $Report_stock = Report_stock::where('type', $type)
-            ->where('status', 'Approved')
-            ->get();
-        return $this->returnSuccess('Successful', $Report_stock);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
     /**
      * Display the specified resource.
      *
@@ -61,53 +26,21 @@ class ReportStockController extends Controller
      */
     public function show($id)
     {
-        $Report_stock = Report_stock::with('doc')
+        $Report_stock = Report_stock::with('user')
+            ->with('vendor')
+            ->with('user_create')
             ->with(['item_trans' => function ($query) {
-                $query->with('sale_order2');
                 $query->with('item');
-                $query->with('customer');
+                $query->with('item_attribute');
+                $query->with('item_attribute_second');
             }])
             ->find($id);
 
         return $this->returnSuccess('Successful', $Report_stock);
     }
 
-    public function showReport($id)
-    {
 
-        $Report_stock = Sale_order::with(['item_trans' => function ($query) {
 
-                $query->with('item');
-                $query->with('customer');
-
-            }])
-            ->find($id);
-
-        return $this->returnSuccess('Successful', $Report_stock);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.
@@ -152,20 +85,19 @@ class ReportStockController extends Controller
         $page = $start / $length + 1;
 
         $type = $request->type;
-        $status = $request->status;
 
         if (!isset($type)) {
             return $this->returnErrorData('[type] Data Not Found', 404);
         }
 
-        $col = array('id', 'doc_id', 'report_id', 'date', 'type', 'create_by', 'status', 'status_by', 'status_at', 'reason', 'created_at', 'updated_at');
+        $col = array('id', 'user_id', 'vendor_id', 'report_id', 'date', 'po_number', 'type', 'create_by', 'status', 'status_by', 'status_at', 'reason', 'created_at', 'updated_at');
 
         $d = Report_stock::select($col)
-            ->where('type', $type)->with('user_create');
+            ->with('user')
+            ->with('vendor')
+            ->with('user_create')
+            ->where('type', $type);
 
-        if ($status) {
-            $d->where('status', $status);
-        }
 
         $d->orderby($col[$order[0]['column']], $order[0]['dir']);
         if ($search['value'] != '' && $search['value'] != null) {
@@ -189,9 +121,6 @@ class ReportStockController extends Controller
 
                 $No = $No + 1;
                 $d[$i]->No = $No;
-
-                //path pdf
-                $d[$i]->pdf_path = url('/api/report_stock_PDF/' . $d[$i]->id);
             }
         }
 
@@ -201,124 +130,13 @@ class ReportStockController extends Controller
     public function DepositItem(Request $request)
     {
 
-
         $Deposit = $request->deposit;
         $loginBy = $request->login_by;
-
-
 
         if (empty($Deposit)) {
             return $this->returnErrorData('กรุณาเพิ่มสินค้า', 404);
         } else if (!isset($request->date)) {
             return $this->returnErrorData('กรุณาระบุวันที่', 404);
-
-        } else if (!isset($request->vendor_id)) {
-            return $this->returnErrorData('กรุณาระบุซัพพลายเออร์', 404);
-        }
-
-        else if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
-
-        DB::beginTransaction();
-
-        try {
-
-            //add report stock
-            $report_stock = new Report_stock();
-            $report_stock->report_id = $this->getLastNumber(1);
-
-            $report_stock->date = $request->date;
-
-            $report_stock->create_by = $loginBy->user_id;
-
-            $report_stock->status = 'Open';
-            $report_stock->type = 'Deposit';
-            //$report_stock->type = 'Deposit';
-
-            $report_stock->doc_id = 1;
-            $report_stock->save();
-            $report_stock->doc;
-            //dd($report_stock->doc);
-            //run doc
-            $this->setRunDoc(1, $report_stock->report_id);
-            //
-
-            //add Deposit
-            for ($i = 0; $i < count($Deposit); $i++) {
-
-                //check type mat
-                $item = Item::find($Deposit[$i]['item_id']);
-
-                if (!empty($item)) {
-                    if ($item->item_type_id == 3 || $item->item_type_id == '3') {
-                        $type = 'Mat_QC';
-                    } else {
-                        $type = 'Deposit';
-                    }
-                } else {
-                    return $this->returnErrorData('Item Not Found ', 404);
-                }
-                //
-
-                //stock Count
-                $stockCount = $this->getStockCount($Deposit[$i]['item_id']);
-
-                $Deposit[$i]['stock'] = $stockCount;
-
-                // dd($stockCount);
-
-                $Deposit[$i]['balance'] = $stockCount + $Deposit[$i]['qty'];
-                //dd($stockCount + $Deposit[$i]['qty']);
-
-                $Deposit[$i]['report_stock_id'] = $report_stock->id; //report id
-                //dd($Deposit[$i]['report_stock_id'] );
-                $Deposit[$i]['po_number'] = $request->po_number; //inv no
-                //$Deposit[$i]['lot_maker'] = $request->lot_maker;
-                //dd($Deposit[$i]['po_number']);
-
-                $Deposit[$i]['vendor_id'] = $request->vendor_id; //vendor_id
-                //dd($Deposit[$i]['vendor_id']);
-                $Deposit[$i]['date'] = $request->date;
-                $Deposit[$i]['type'] = $type;
-                $Deposit[$i]['operation'] = 'booking';
-                $Deposit[$i]['create_by'] = $loginBy->user_id;
-                $Deposit[$i]['created_at'] = Carbon::now()->toDateTimeString();
-                $Deposit[$i]['updated_at'] = Carbon::now()->toDateTimeString();
-            }
-
-            DB::table('item_trans')->insert($Deposit);
-
-
-
-
-
-
-
-            DB::commit();
-
-            return $this->returnSuccess('Successful operation', ['report_stock_id' => $report_stock->id]);
-        } catch (\Throwable $e) {
-
-            DB::rollback();
-
-            return $this->returnErrorData('Something went wrong Please try again ' . $e->getMessage(), 404);
-        }
-    }
-
-
-
-
-
-    public function DepositLotItem(Request $request)
-    {
-        $Deposit = $request->deposit;
-        $loginBy = $request->login_by;
-
-        if (empty($Deposit)) {
-            return $this->returnErrorData('[deposit] Data Not Found', 404);
-        } else if (!isset($request->date)) {
-            return $this->returnErrorData('[date] Data Not Found', 404);
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
@@ -329,44 +147,40 @@ class ReportStockController extends Controller
 
             //add report stock
             $report_stock = new Report_stock();
-            $report_stock->report_id = $this->getLastNumber(1);
+            $report_stock->user_id = $loginBy->id;
+            $report_stock->vendor_id = $request->vendor_id;
+
+            $report_stock->report_id = $this->genCodeReportStock($report_stock, 'D', '000','Deposit', $loginBy->id);
+
             $report_stock->date = $request->date;
+            $report_stock->po_number = $request->po_number;
+
             $report_stock->create_by = $loginBy->user_id;
-            $report_stock->status = 'Open';
+            $report_stock->status = 'Approved';
             $report_stock->type = 'Deposit';
-
-            $report_stock->doc_id = 1;
             $report_stock->save();
-            $report_stock->doc;
-
-            //run doc
-            $this->setRunDoc(1, $report_stock->report_id);
-            //
 
             //add Deposit
             for ($i = 0; $i < count($Deposit); $i++) {
 
                 //stock Count
-                $stockCount = $this->getStockCount($Deposit[$i]['item_id']);
+                $stockCount = $this->getStockCount($Deposit[$i]['item_id'], $Deposit[$i]['item_attribute_id'], $Deposit[$i]['item_attribute_second_id']);
 
-                $Item_trans = new Item_trans();
-                $Item_trans->item_id = $Deposit[$i]['item_id'];
-                $Item_trans->qty = $Deposit[$i]['qty'];
-
-                $Item_trans->unit_convertion_id = $Deposit[$i]['unit_convertion_id'];
-                // $Item_trans->lot_maker = $Deposit[$i]['lot_maker'];
-                $Item_trans->remark = $Deposit[$i]['remark'];
-
-                $Item_trans->stock = $stockCount;
-                $Item_trans->balance = $stockCount + $Deposit[$i]['qty'];
-                $Item_trans->report_stock_id = $report_stock->id; //report id fk
-                $Item_trans->date = $request->date;
-                $Item_trans->type = 'Deposit';
-                $Item_trans->description = 'Lot';
-                $Item_trans->create_by = $loginBy->user_id;
-                $Item_trans->save();
+                $Deposit[$i]['stock'] = $stockCount;
+                $Deposit[$i]['balance'] = $stockCount + $Deposit[$i]['qty'];
+                $Deposit[$i]['report_stock_id'] = $report_stock->id; //report id
+                $Deposit[$i]['po_number'] = $request->po_number; //inv no
+                $Deposit[$i]['vendor_id'] = $request->vendor_id; //vendor_id
+                $Deposit[$i]['date'] = $request->date;
+                $Deposit[$i]['type'] = 'Deposit';
+                $Deposit[$i]['operation'] = 'finish';
+                $Deposit[$i]['status'] = 1;
+                $Deposit[$i]['create_by'] = $loginBy->user_id;
+                $Deposit[$i]['created_at'] = Carbon::now()->toDateTimeString();
+                $Deposit[$i]['updated_at'] = Carbon::now()->toDateTimeString();
             }
 
+            DB::table('item_trans')->insert($Deposit);
 
             DB::commit();
 
@@ -375,7 +189,7 @@ class ReportStockController extends Controller
 
             DB::rollback();
 
-            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+            return $this->returnErrorData('Something went wrong Please try again ' . $e->getMessage(), 404);
         }
     }
 
@@ -398,22 +212,18 @@ class ReportStockController extends Controller
 
             //add report stock
             $report_stock = new Report_stock();
-            $report_stock->report_id = $this->getLastNumber(2);
+
+            $report_stock->user_id = $loginBy->id;
+            $report_stock->vendor_id = $request->vendor_id;
+
+            $report_stock->report_id = $this->genCodeReportStock($report_stock, 'W', '000','Withdraw', $loginBy->id);
+
             $report_stock->date = $request->date;
 
             $report_stock->create_by = $loginBy->user_id;
-            $report_stock->status = 'Open';
+            $report_stock->status = 'Approved';
             $report_stock->type = 'Withdraw';
-
-            $report_stock->doc_id = 2;
-
-
             $report_stock->save();
-            $report_stock->doc;
-
-            //run doc
-            $this->setRunDoc(2, $report_stock->report_id);
-            //
 
             //add Withdraw
             for ($i = 0; $i < count($Withdraw); $i++) {
@@ -421,7 +231,7 @@ class ReportStockController extends Controller
                 //qty withdraw
                 $qty = -$Withdraw[$i]['qty'];;
                 //stock Count
-                $stockCount = $this->getStockCount($Withdraw[$i]['item_id']);
+                $stockCount = $this->getStockCount($Withdraw[$i]['item_id'], $Withdraw[$i]['item_attribute_id'], $Withdraw[$i]['item_attribute_second_id']);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('Not enough item', 404);
@@ -430,86 +240,17 @@ class ReportStockController extends Controller
                 $Item_trans = new Item_trans();
                 $Item_trans->item_id = $Withdraw[$i]['item_id'];
                 $Item_trans->qty = $qty;
-
-
-
-
-                //$Item_trans->lot_maker = $Withdraw[$i]['lot_maker'];
-                // $Item_trans->remark = $Withdraw[$i]['remark'];
-
-                $Item_trans->customer_id = $request->customer_id;
                 $Item_trans->stock = $stockCount;
                 $Item_trans->balance = $stockCount - abs($qty);
-
-                // if ($Withdraw[$i]['delevery_order_id']) {
-                //     $Item_trans->delevery_order_id = $Withdraw[$i]['delevery_order_id']; //delevery_order_id
-                // }
-
                 $Item_trans->report_stock_id = $report_stock->id; //report id fk
                 $Item_trans->date = $request->date;
                 $Item_trans->type = 'Withdraw';
+                $Item_trans->operation = 'finish';
+                $Item_trans->status = 1;
                 $Item_trans->create_by = $loginBy->user_id;
                 $Item_trans->save();
-
-                // //add lot trans
-                // if (!empty($Withdraw[$i]['lot'])) {
-
-                //     //check qty item trans
-                //     $sumQty = 0;
-                //     for ($j = 0; $j < count($Withdraw[$i]['lot']); $j++) {
-
-                //         if (intval($Withdraw[$i]['lot'][$j]['qty']) > ($Withdraw[$i]['qty'] - $sumQty)) {
-                //             return $this->returnErrorData('Qty is over limit', 404);
-                //         }
-
-                //         $sumQty += intval($Withdraw[$i]['lot'][$j]['qty']);
-                //     }
-                //     //
-
-                //     for ($j = 0; $j < count($Withdraw[$i]['lot']); $j++) {
-
-                //         //count Item In lot
-                //         $countItemInLot = $this->countItemInLot($Withdraw[$i]['item_id'], $Withdraw[$i]['lot'][$j]['lot_id'], $Withdraw[$i]['location_1_id']);
-
-                //         //count Withdraw ItemIn Progress
-                //         $inProgress = $this->countWithdrawItemInProgress($Withdraw[$i]['item_id'], $Withdraw[$i]['lot'][$j]['lot_id'], $Withdraw[$i]['location_1_id']);
-
-                //         if (abs($qty) > abs($countItemInLot - $inProgress)) {
-                //             return $this->returnErrorData('Not enough item', 404);
-                //         }
-
-                //         $Qty = -$Withdraw[$i]['lot'][$j]['qty'];
-
-                //         //add lot trans
-                //         $Lot_trans = new Lot_trans();
-                //         $Lot_trans->item_id = $Withdraw[$i]['item_id'];
-                //         $Lot_trans->lot_id = $Withdraw[$i]['lot'][$j]['lot_id'];
-                //         $Lot_trans->lot_maker = $Withdraw[$i]['lot'][$j]['lot_maker']; //lot maker
-                //         $Lot_trans->qty = $Qty;
-
-                //         $Lot_trans->item_trans_id = $Item_trans->id;
-                //         $Lot_trans->location_1_id = $Withdraw[$i]['location_1_id'];
-
-                //         $Lot_trans->status = 0;
-
-                //         $Lot_trans->create_by = $loginBy->user_id;
-                //         $Lot_trans->save();
-                //     }
-                // }
             }
 
-            // //send mail appove
-            // $user_appove = Doc::with('users')->where('id', $report_stock->doc_id)->first();
-
-            // $text = 'There is a request for approval to withdraw items from the stock. Can be viewed at ';
-            // $title = 'Report Stock Finish Goods (WithDraw)';
-            // $type = 'Appove Withdraw Item';
-
-            // for ($j = 0; $j < count($user_appove->users); $j++) {
-
-            //     $this->sendMail($user_appove->users[$j]->email, $text, $title, $type);
-
-            // }
 
             DB::commit();
 
@@ -522,458 +263,65 @@ class ReportStockController extends Controller
         }
     }
 
-    public function MoveMentItem(Request $request)
-    {
+    // public function AppoveReportStock(Request $request, $id)
+    // {
+    //     $loginBy = $request->login_by;
 
-        $Move = $request->move;
-        $loginBy = $request->login_by;
+    //     if (!isset($id)) {
+    //         return $this->returnErrorData('[id] Data Not Found', 404);
+    //     } else if (!isset($request->status)) {
+    //         return $this->returnErrorData('[status] Data Not Found', 404);
+    //     } else if (!isset($loginBy)) {
+    //         return $this->returnErrorData('[login_by] Data Not Found', 404);
+    //     }
 
-        if (empty($Move)) {
-            return $this->returnErrorData('[move] Data Not Found', 404);
-        } else if (!isset($request->date)) {
-            return $this->returnErrorData('[date] Data Not Found', 404);
-        } else if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
+    //     DB::beginTransaction();
 
-        DB::beginTransaction();
+    //     try {
 
-        try {
 
-            //add report stock
-            $report_stock = new Report_stock();
-            $report_stock->report_id = $this->getLastNumber(3);
-            $report_stock->date = $request->date;
-            $report_stock->create_by = $loginBy->user_id;
-            $report_stock->status = 'Open';
-            $report_stock->type = 'Movement';
+    //         $Report_stock = Report_stock::find($id);
 
-            $report_stock->doc_id = 3;
-            $report_stock->save();
-            $report_stock->doc;
+    //         $Report_stock->status = $request->status;
 
-            //run doc
-            $this->setRunDoc(3, $report_stock->report_id);
+    //         $Report_stock->status_by = $loginBy->user_id;
+    //         $Report_stock->status_at = Carbon::now()->toDateTimeString();
 
-            //add Move Withdraw
-            for ($i = 0; $i < count($Move); $i++) {
+    //         if ($request->status == 'Reject') {
+    //             $Report_stock->reason = $request->reason;
+    //         }
 
-                //stock Count
-                $stockCount = $this->getStockCount($Move[$i]['item_id']);
+    //         $Report_stock->updated_at = Carbon::now()->toDateTimeString();
+    //         $Report_stock->save();
 
-                //qty
-                $qty = -$Move[$i]['qty'];
+    //         if ($request->status == 'Approved') {
 
-                $Item_trans = new Item_trans();
-                $Item_trans->item_id = $Move[$i]['item_id'];
-                $Item_trans->qty = $qty;
+    //             $ItemTrans = Item_trans::where('report_stock_id', $Report_stock->id)->get();
+    //             for ($i = 0; $i < count($ItemTrans); $i++) {
 
-                $Item_trans->remark = $Move[$i]['remark'];
+    //                 $ItemTrans[$i]->status = 1;
+    //                 $ItemTrans[$i]->operation = 'finish';
+    //                 $ItemTrans[$i]->save();
+    //             }
+    //         }
 
-                $Item_trans->stock = $stockCount;
-                $Item_trans->balance = $stockCount - abs($qty);
+    //         //log
+    //         $userId = $loginBy->user_id;
+    //         $type = 'Appove Report Stock (' . $Report_stock->type . ')';
+    //         $description = 'User ' . $userId . ' has ' . $type . ' number ' . $Report_stock->report_id;
+    //         $this->Log($userId, $description, $type);
+    //         //
 
-                // $Item_trans->lot_maker = $Move[$i]['lot_maker'];
+    //         DB::commit();
 
-                $Item_trans->report_stock_id = $report_stock->id; //report id
+    //         return $this->returnSuccess('Successful operation', ['report_stock_id' => $Report_stock->id]);
+    //     } catch (\Throwable $e) {
 
-                $Item_trans->date = $request->date;
-                $Item_trans->type = 'Withdraw';
-                $Item_trans->description = 'Out';
-                $Item_trans->create_by = $loginBy->user_id;
-                $Item_trans->save();
+    //         DB::rollback();
 
-                ///////////////////////// Movement withdraw ///////////////////////////
-
-                // if (!empty($Move[$i]['lot'])) {
-
-                //     //check qty item trans
-                //     $sumQty = 0;
-                //     for ($j = 0; $j < count($Move[$i]['lot']); $j++) {
-
-                //         if (abs(intval($Move[$i]['lot'][$j]['qty'])) > (abs($Move[$i]['qty']) - $sumQty)) {
-                //             return $this->returnErrorData('Qty is over limit', 404);
-                //         }
-
-                //         $sumQty += abs(intval($Move[$i]['lot'][$j]['qty']));
-                //     }
-                //     //
-
-                //     for ($j = 0; $j < count($Move[$i]['lot']); $j++) {
-
-                //         $Qty = -$Move[$i]['lot'][$j]['qty'];
-
-                //         //lot trans
-                //         $Lot_trans = new Lot_trans();
-                //         $Lot_trans->item_id = $Move[$i]['item_id'];
-                //         $Lot_trans->lot_id = $Move[$i]['lot'][$j]['lot_id'];
-                //         $Lot_trans->lot_maker = $Move[$i]['lot'][$j]['lot_maker']; //lot maker
-                //         $Lot_trans->qty = $Qty;
-
-                //         $Lot_trans->item_trans_id = $Item_trans->id;
-                //         $Lot_trans->location_1_id = $Move[$i]['location_1_id']; // withdraw
-                //         $Lot_trans->status = 0;
-
-                //         $Lot_trans->create_by = $loginBy->user_id;
-                //         $Lot_trans->save();
-                //     }
-                // }
-                ////////////////////////////////////////////////////////////////////////////
-
-            }
-
-            //add Move Deposit
-            for ($i = 0; $i < count($Move); $i++) {
-
-                //stock Count
-                $stockCount = $this->getStockCount($Move[$i]['item_id']);
-
-                $Item_trans = new Item_trans();
-
-                $Item_trans->item_id = $Move[$i]['item_id'];
-                $Item_trans->qty = $Move[$i]['qty'];
-
-                $Item_trans->remark = $Move[$i]['remark'];
-
-                $Item_trans->stock = $stockCount;
-                $Item_trans->balance = $stockCount + $Move[$i]['qty'];
-
-                // $Item_trans->lot_maker = $Move[$i]['lot_maker'];
-
-                $Item_trans->report_stock_id = $report_stock->id; //report id
-
-                $Item_trans->date = $request->date;
-                $Item_trans->type = 'Deposit';
-                $Item_trans->description = 'In';
-                $Item_trans->create_by = $loginBy->user_id;
-                $Item_trans->save();
-
-                ///////////////////////// Movement Deposit ///////////////////////////
-
-                // if (!empty($Move[$i]['lot'])) {
-
-                //     //check qty item trans
-                //     $sumQty = 0;
-                //     for ($j = 0; $j < count($Move[$i]['lot']); $j++) {
-
-                //         if (abs(intval($Move[$i]['lot'][$j]['qty'])) > (abs($Move[$i]['qty']) - $sumQty)) {
-                //             return $this->returnErrorData('Qty is over limit', 404);
-                //         }
-
-                //         $sumQty += abs(intval($Move[$i]['lot'][$j]['qty']));
-                //     }
-                //     //
-
-                //     for ($j = 0; $j < count($Move[$i]['lot']); $j++) {
-
-                //         $Qty = $Move[$i]['lot'][$j]['qty'];
-
-                //         //lot trans
-                //         $Lot_trans = new Lot_trans();
-                //         $Lot_trans->item_id = $Move[$i]['item_id'];
-                //         $Lot_trans->lot_id = $Move[$i]['lot'][$j]['lot_id'];
-                //         $Lot_trans->lot_maker = $Move[$i]['lot'][$j]['lot_maker']; //lot maker
-                //         $Lot_trans->qty = $Qty;
-
-                //         $Lot_trans->item_trans_id = $Item_trans->id;
-                //         $Lot_trans->location_1_id = $Move[$i]['location_2_id']; // deposit
-                //         $Lot_trans->status = 0;
-
-                //         $Lot_trans->create_by = $loginBy->user_id;
-                //         $Lot_trans->save();
-                //     }
-                // }
-
-                ////////////////////////////////////////////////////////////////////////////
-
-            }
-
-            // //merge tans movement
-            // $transMove = array_merge($MoveWithdraw, $MoveDeposit);
-            // sort($transMove);
-
-            // DB::table('item_trans')->insert($transMove);
-
-            // //send mail appove
-            // $user_appove = Doc::with('users')->where('id', $report_stock->doc_id)->first();
-
-            // $text = 'There is a request to approve the receipt of the item to the stock, can be viewed at ';
-            // $title = 'Report Stock  (Movement)';
-            // $type = 'Appove Movement Item';
-
-            // for ($j = 0; $j < count($user_appove->users); $j++) {
-
-            //     $this->sendMail($user_appove->users[$j]->email, $text, $title, $type);
-
-            // }
-
-            DB::commit();
-
-            return $this->returnSuccess('Successful operation', ['report_stock_id' => $report_stock->id]);
-        } catch (\Throwable $e) {
-
-            DB::rollback();
-
-            return $this->returnErrorData('Something went wrong Please try again ', 404);
-        }
-    }
-
-    public function AdjustItem(Request $request)
-    {
-        $Adjust = $request->adjust;
-        $loginBy = $request->login_by;
-
-        if (empty($Adjust)) {
-            return $this->returnErrorData('[adjust] Data Not Found', 404);
-        } else if (!isset($request->date)) {
-            return $this->returnErrorData('[date] Data Not Found', 404);
-        } else if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
-
-        DB::beginTransaction();
-
-        try {
-
-            //add report stock
-            $report_stock = new Report_stock();
-            $report_stock->report_id = $this->getLastNumber(4);
-            $report_stock->date = $request->date;
-            $report_stock->create_by = $loginBy->user_id;
-            $report_stock->status = 'Open';
-            $report_stock->type = 'Adjust';
-
-            $report_stock->doc_id = 4;
-            $report_stock->save();
-            $report_stock->doc;
-
-            //run doc
-            $this->setRunDoc(4, $report_stock->report_id);
-            //
-
-            //add Adjust
-            for ($i = 0; $i < count($Adjust); $i++) {;
-                $Adjust[$i]['qty'] = $Adjust[$i]['qty'];
-                //stock Count
-                $stockCount = $this->getStockCount($Adjust[$i]['item_id']);
-
-                //adjust_type
-                if ($Adjust[$i]['adjust_type'] == 'Add') {
-                    $Adjust[$i]['qty'] = $Adjust[$i]['qty'];
-                } else {
-                    $Adjust[$i]['qty'] = -$Adjust[$i]['qty'];
-                }
-
-                $Item_trans = new Item_trans();
-                $Item_trans->item_id = $Adjust[$i]['item_id'];
-
-                $Item_trans->qty = $Adjust[$i]['qty'];
-
-
-                //$Item_trans->unit_convertion_id = $Adjust[$i]['unit_convertion_id'];
-                // $Item_trans->lot_maker = $Adjust[$i]['lot_maker'];
-                $Item_trans->remark = $Adjust[$i]['remark'];
-
-                $Item_trans->stock = $stockCount;
-                $Item_trans->balance = $stockCount + $Adjust[$i]['qty'];
-
-                $Item_trans->report_stock_id = $report_stock->id; //report id
-
-                $Item_trans->date = $request->date;
-                $Item_trans->type = 'Adjust';
-                $Item_trans->description = $Adjust[$i]['adjust_type'];
-                $Item_trans->create_by = $loginBy->user_id;
-                $Item_trans->save();
-
-                //add lot trans
-                // if (!empty($Adjust[$i]['lot'])) {
-
-                //     //check qty item trans
-                //     $sumQty = 0;
-                //     for ($j = 0; $j < count($Adjust[$i]['lot']); $j++) {
-
-                //         if (abs(intval($Adjust[$i]['lot'][$j]['qty'])) > (abs($Adjust[$i]['qty']) - $sumQty)) {
-                //             return $this->returnErrorData('Qty is over limit', 404);
-                //         }
-
-                //         $sumQty += abs(intval($Adjust[$i]['lot'][$j]['qty']));
-                //     }
-                //     //
-
-                //     if ($Adjust[$i]['adjust_type'] == 'Add') {
-
-                //         $Adjust[$i]['qty'] = $Adjust[$i]['qty'];
-
-                //         for ($j = 0; $j < count($Adjust[$i]['lot']); $j++) {
-
-                //             //add case
-
-                //             //count all item in lot
-                //             $balanceLot = $this->countAllItemInLot($Adjust[$i]['item_id'], $Adjust[$i]['lot'][$j]['lot_id'], $Adjust[$i]['location_1_id']);
-
-                //             //count Deposit ItemIn Progress
-                //             $inProgress = $this->countDepostiItemInProgress($Adjust[$i]['item_id'], $Adjust[$i]['lot'][$j]['lot_id'], $Adjust[$i]['location_1_id']);
-
-                //             $canDeposite = abs($inProgress - $balanceLot);
-
-                //             if (abs($Adjust[$i]['qty']) > $canDeposite) {
-                //                 return $this->returnErrorData('Item is over limit', 404);
-                //             }
-
-                //             $Qty = $Adjust[$i]['lot'][$j]['qty'];
-
-                //             //add lot trans
-                //             $Lot_trans = new Lot_trans();
-                //             $Lot_trans->item_id = $Adjust[$i]['item_id'];
-                //             $Lot_trans->lot_id = $Adjust[$i]['lot'][$j]['lot_id'];
-                //             $Lot_trans->lot_maker = $Adjust[$i]['lot'][$j]['lot_maker']; //lot maker
-                //             $Lot_trans->qty = $Qty;
-
-                //             $Lot_trans->item_trans_id = $Item_trans->id;
-                //             $Lot_trans->location_1_id = $Adjust[$i]['location_1_id'];
-                //             $Lot_trans->status = 0;
-
-                //             $Lot_trans->create_by = $loginBy->user_id;
-                //             $Lot_trans->save();
-                //         }
-                //     } else {
-
-                //         //remove case
-                //         $Adjust[$i]['qty'] = -$Adjust[$i]['qty'];
-
-                //         for ($j = 0; $j < count($Adjust[$i]['lot']); $j++) {
-
-                //             //count Item In lot
-                //             $countItemInLot = $this->countItemInLot($Adjust[$i]['item_id'], $Adjust[$i]['lot'][$j]['lot_id'], $Adjust[$i]['location_1_id']);
-
-                //             //count Withdraw ItemIn Progress
-                //             $inProgress = $this->countWithdrawItemInProgress($Adjust[$i]['item_id'], $Adjust[$i]['lot'][$j]['lot_id'], $Adjust[$i]['location_1_id']);
-
-                //             if (abs($Adjust[$i]['qty']) > abs($countItemInLot - $inProgress)) {
-                //                 return $this->returnErrorData('Not enough item', 404);
-                //             }
-
-                //             $Qty = -$Adjust[$i]['lot'][$j]['qty'];
-
-                //             //add lot trans
-                //             $Lot_trans = new Lot_trans();
-                //             $Lot_trans->item_id = $Adjust[$i]['item_id'];
-                //             $Lot_trans->lot_id = $Adjust[$i]['lot'][$j]['lot_id'];
-                //             $Lot_trans->lot_maker = $Adjust[$i]['lot'][$j]['lot_maker']; //lot maker
-                //             $Lot_trans->qty = $Qty;
-
-                //             $Lot_trans->item_trans_id = $Item_trans->id;
-                //             $Lot_trans->location_1_id = $Adjust[$i]['location_1_id'];
-                //             $Lot_trans->status = 0;
-
-                //             $Lot_trans->create_by = $loginBy->user_id;
-                //             $Lot_trans->save();
-                //         }
-                //     }
-                // }
-
-                // //remove arr adjust_type
-                // unset($Adjust[$i]['adjust_type']);
-
-            }
-
-            // DB::table('item_trans')->insert($Adjust);
-
-            // //send mail appove
-            // $user_appove = Doc::with('users')->where('id', $report_stock->doc_id)->first();
-
-            // $text = 'There is a request to approve the receipt of the item to the stock, can be viewed at ';
-            // $title = 'Report Stock (Adjust)';
-            // $type = 'Appove Adjust Item';
-
-            // for ($j = 0; $j < count($user_appove->users); $j++) {
-
-            //     $this->sendMail($user_appove->users[$j]->email, $text, $title, $type);
-
-            // }
-
-            DB::commit();
-
-            return $this->returnSuccess('Successful operation', ['report_stock_id' => $report_stock->id]);
-        } catch (\Throwable $e) {
-
-            DB::rollback();
-
-            return $this->returnErrorData('Something went wrong Please try again ', 404);
-        }
-    }
-
-    public function AppoveReportStock(Request $request, $id)
-    {
-        $loginBy = $request->login_by;
-
-        if (!isset($id)) {
-            return $this->returnErrorData('[id] Data Not Found', 404);
-        } else if (!isset($request->status)) {
-            return $this->returnErrorData('[status] Data Not Found', 404);
-        } else if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
-
-        DB::beginTransaction();
-
-        try {
-
-            /////////////////////////////////////chck type item trans///////////////////////////////////////////////////////////
-            $check = Item_trans::where('report_stock_id', $id)->get();
-
-            // for ($i = 0; $i < count($check); $i++) {
-
-            //     if ($check[$i]->type == 'Mat_QC' || $check[$i]->type == 'Mat_Cancel') {
-            //         return $this->returnErrorData('Authorization cannot be performed. due to invalid status', 404);
-            //         break;
-            //     }
-            // }
-
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-            $Report_stock = Report_stock::find($id);
-
-            $Report_stock->status = $request->status;
-
-            $Report_stock->status_by = $loginBy->user_id;
-            $Report_stock->status_at = Carbon::now()->toDateTimeString();
-
-            if ($request->status == 'Reject') {
-                $Report_stock->reason = $request->reason;
-            }
-
-            $Report_stock->updated_at = Carbon::now()->toDateTimeString();
-            $Report_stock->save();
-
-            if ($request->status == 'Approved') {
-
-                $ItemTrans = Item_trans::where('report_stock_id', $Report_stock->id)->get();
-                for ($i = 0; $i < count($ItemTrans); $i++) {
-
-                    $ItemTrans[$i]->status = 1;
-                    $ItemTrans[$i]->operation = 'finish';
-                    $ItemTrans[$i]->save();
-                }
-            }
-
-            //log
-            $userId = $loginBy->user_id;
-            $type = 'Appove Report Stock (' . $Report_stock->type . ')';
-            $description = 'User ' . $userId . ' has ' . $type . ' number ' . $Report_stock->report_id;
-            $this->Log($userId, $description, $type);
-            //
-
-            DB::commit();
-
-            return $this->returnSuccess('Successful operation', ['report_stock_id' => $Report_stock->id]);
-        } catch (\Throwable $e) {
-
-            DB::rollback();
-
-            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
-        }
-    }
+    //         return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+    //     }
+    // }
 
     // public function ReportStockFgPDF($ReportId)
     // {

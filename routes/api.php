@@ -237,12 +237,12 @@ Route::group(['middleware' => 'checkjwt'], function () {
   //Item
   Route::post('/get_item', [ItemController::class, 'getItem']);
   Route::post('/get_item_all', [ItemController::class, 'getItemAll']);
-  Route::put('/update2_item/{id}', [ItemController::class, 'update2']);
+  Route::put('/update_item/{id}', [ItemController::class, 'update']);
   Route::resource('item', ItemController::class);
   Route::post('/item_page', [ItemController::class, 'ItemPage']);
   Route::post('/item_add', [ItemController::class, 'Putstore']);
-  Route::post('/update_item', [ItemController::class, 'update']);
-  Route::post('/import_item', [ItemController::class, 'ImportItem']);
+//   Route::post('/update_item', [ItemController::class, 'update']);
+//   Route::post('/import_item', [ItemController::class, 'ImportItem']);
 
   Route::post('/get_stock_item_by_bom_id', [ItemController::class, 'getStockItemByBomId']);
   Route::post('/get_stock_item_by_Location', [ItemController::class, 'getStockItemByLocation']);

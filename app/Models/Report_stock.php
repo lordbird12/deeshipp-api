@@ -36,28 +36,34 @@ class Report_stock extends Model
 
     //////////////////////////////////////// relation //////////////////////////////////////
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+
     public function item_trans()
     {
         return $this->hasMany(Item_trans::class);
     }
-
-
-
 
     public function sale_order()
     {
         return $this->belongsTo(Sale_order::class);
     }
 
-    public function lot_trans()
+    public  function user_create()
     {
-        return $this->hasMany(Lot_trans::class);
+        return $this->belongsTo(User::class, 'create_by', 'user_id');
     }
 
-    public function doc()
-    {
-        return $this->belongsTo(Doc::class);
-    }
+
+
 
 
 }

@@ -8,6 +8,7 @@ use App\Models\Item_line;
 use App\Models\Item_trans;
 use App\Models\Log;
 use App\Models\Log_saleOrder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -23,27 +24,6 @@ class Controller extends BaseController
 
 
 
-    public function getStockCountqty($item_id)
-    {
-        $QtyItem = Item_trans::where('item_id', $item_id);
-
-        $qtyItem = $QtyItem->where('status', 1)
-            ->where('operation', 'finish')
-            ->sum('qty');
-
-        return intval($qtyItem);
-    }
-
-    public function getStockBookingCount($item_id)
-    {
-        $QtyItem = Item_trans::where('item_id', $item_id);
-
-        $qtyItem = $QtyItem->where('status', 1)
-            ->where('operation', 'booking')
-            ->sum('qty');
-
-        return intval($qtyItem);
-    }
 
 
     public function returnSuccess($massage, $data)
@@ -164,7 +144,7 @@ class Controller extends BaseController
         $image->move($destinationPath, $input['imagename']);
 
 
-        return $this->returnSuccess('Successful operation', url($path . $input['imagename']));
+        return $this->returnSuccess('Successful operation', $path . $input['imagename']);
     }
 
 
@@ -284,17 +264,66 @@ class Controller extends BaseController
     }
 
 
-    public function getStockCount($item_id)
+    public function getStockCount($item_id, $item_attribute_id, $Item_attribute_second_id)
     {
 
         $QtyItem = Item_trans::where('item_id', $item_id);
 
+        if ($item_attribute_id) {
+            $QtyItem->where('item_attribute_id', $item_attribute_id);
+        }
+
+        if ($Item_attribute_second_id) {
+            $QtyItem->where('Item_attribute_second_id', $Item_attribute_second_id);
+        }
+
+
+        $qtyItem = $QtyItem->where('status', 1)
+            ->where('operation', 'finish')
+            ->sum('qty');
+
+        return intval($qtyItem);
+    }
+
+    public function getStockCountBalance($item_id, $item_attribute_id, $Item_attribute_second_id)
+    {
+        $QtyItem = Item_trans::where('item_id', $item_id);
+
+        if ($item_attribute_id) {
+            $QtyItem->where('item_attribute_id', $item_attribute_id);
+        }
+
+        if ($Item_attribute_second_id) {
+            $QtyItem->where('Item_attribute_second_id', $Item_attribute_second_id);
+        }
+
+
         $qtyItem = $QtyItem->where('status', 1)
             ->sum('qty');
 
-        // dd($qtyItem);
         return intval($qtyItem);
     }
+
+    public function getStockCountBooking($item_id, $item_attribute_id, $Item_attribute_second_id)
+    {
+        $QtyItem = Item_trans::where('item_id', $item_id);
+
+        if ($item_attribute_id) {
+            $QtyItem->where('item_attribute_id', $item_attribute_id);
+        }
+
+        if ($Item_attribute_second_id) {
+            $QtyItem->where('Item_attribute_second_id', $Item_attribute_second_id);
+        }
+
+
+        $qtyItem = $QtyItem->where('status', 1)
+            ->where('operation', 'booking')
+            ->sum('qty');
+
+        return intval($qtyItem);
+    }
+
 
     public function getItemCount($item_id, $main_item_id)
     {
@@ -310,6 +339,61 @@ class Controller extends BaseController
 
         // dd($qtyItem);
         return intval($qtyItem);
+    }
+
+    public function genCodeReportStock(Model $model, $prefix, $number, $type, $user_id)
+    {
+
+        $countPrefix = strlen($prefix);
+        $countRunNumber = strlen($number);
+
+        //get last code
+        $m = $model::where('user_id', $user_id)
+            ->where('type', $type)
+            ->orderby('report_id', 'desc')
+            ->first();
+        if ($m) {
+            $lastCode = $m->report_id;
+        } else {
+            $lastCode = $prefix . $number;
+        }
+
+
+        $codelast = substr($lastCode, -$countRunNumber);
+
+        $newNumber = intval($codelast) + 1;
+        $Number = sprintf('%0' . strval($countRunNumber) . 'd', $newNumber);
+
+        $runNumber = $prefix . date('y') . date('m') . '-' . $Number;
+
+        return $runNumber;
+    }
+
+    public function genCodeOrder(Model $model, $prefix, $number, $user_id)
+    {
+
+        $countPrefix = strlen($prefix);
+        $countRunNumber = strlen($number);
+
+        //get last code
+        $m = $model::where('user_id', $user_id)
+            ->orderby('order_id', 'desc')
+            ->first();
+        if ($m) {
+            $lastCode = $m->order_id;
+        } else {
+            $lastCode = $prefix . $number;
+        }
+
+
+        $codelast = substr($lastCode, -$countRunNumber);
+
+        $newNumber = intval($codelast) + 1;
+        $Number = sprintf('%0' . strval($countRunNumber) . 'd', $newNumber);
+
+        $runNumber = $prefix . date('y') . date('m') . '-' . $Number;
+
+        return $runNumber;
     }
 
 
@@ -413,6 +497,22 @@ class Controller extends BaseController
         $gen = $prefix . $date . '-' . $run_number;
 
         return $gen;
+    }
+    public function genBarcodeNumber()
+    {
+
+        // Specify the desired barcode length
+        $barcodeLength = 12;
+
+        // Generate a random barcode number
+        $barcodeNumber = '';
+        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        for ($i = 0; $i < $barcodeLength; $i++) {
+            $barcodeNumber .= $characters[rand(0, strlen($characters) - 1)];
+        }
+
+        return $barcodeNumber;
     }
 
     public function dateBetween($dateStart, $dateStop)

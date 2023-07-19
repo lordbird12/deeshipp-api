@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Imports\ItemImport;
 use App\Models\Bom;
 use App\Models\Item;
+use App\Models\Item_attribute;
+use App\Models\Item_attribute_second;
 use App\Models\Item_line;
 use App\Models\Item_trans;
 use App\Models\Item_type;
@@ -28,150 +30,6 @@ class ItemController extends Controller
 {
 
 
-    public function getItemAll(Request $request)
-    {
-
-        //check user
-        $loginBy = $request->login_by;
-
-        if ($loginBy->permission->id == 1) {
-            $userId = null;
-        } else {
-            $userId = $loginBy->id;
-        }
-        //
-
-        $item = Item::with('item_type')
-            ->with('user');
-
-        if ($userId) {
-            $item->where('user_id', $userId);
-        }
-
-        $Item = $item->get()
-            ->toarray();
-        if (!empty($Item)) {
-
-            for ($i = 0; $i < count($Item); $i++) {
-                $Item[$i]['No'] = $i + 1;
-            }
-        }
-
-        return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $Item);
-    }
-
-    public function update2(Request $request, $id)
-    {
-
-        $item_line = $request->item_line;
-        $loginBy = $request->login_by;
-
-        if ($request->set_type  == 'set_products') {
-            if (empty($item_line)) {
-                return $this->returnErrorData('[order] Data Not Found', 404);
-            } else if (!isset($id)) {
-                return $this->returnErrorData('[id] Data Not Found', 404);
-            } else if (!isset($loginBy)) {
-                return $this->returnErrorData('[login_by] Data Not Found', 404);
-            }
-        } else {
-
-            if (!isset($id)) {
-                return $this->returnErrorData('[id] Data Not Found', 404);
-            } else if (!isset($loginBy)) {
-                return $this->returnErrorData('[login_by] Data Not Found', 404);
-            }
-        }
-        DB::beginTransaction();
-
-        try {
-
-
-            if ($request->set_type  == 'normal') {
-
-                $Order = Item::find($id);
-
-                $Order->vendor_id = $request->vendor_id;
-                $Order->name = $request->name;
-                $Order->brand = $request->brand;
-
-                if (!empty($request->image)) {
-                    $Order->image = $request->image;
-                }
-                $Order->unit_cost = $request->unit_cost;
-                $Order->unit_price = $request->unit_price;
-                $Order->description = $request->description;
-                $Order->item_type_id = $request->item_type_id;
-                $Order->set_type = $request->set_type;
-                $Order->weight = $request->weight;
-
-                $Order->updated_at = Carbon::now()->toDateTimeString();
-
-                $Order->save();
-            } else if ($request->set_type  == 'set_products') {
-
-                $Order = Item::find($id);
-                $Order->name = $request->name;
-                $Order->brand = $request->brand;
-                $Order->total_price = $request->total_price;
-                $Order->description = $request->description;
-                $Order->item_type_id = $request->item_type_id;
-                if (!empty($request->image)) {
-                    $Order->image = $request->image;
-                }
-                $Order->save();
-
-                for ($i = 0; $i < count($item_line); $i++) {
-
-                    switch ($item_line[$i]['action']) {
-                        case 'insert':
-
-                            $newItemLine = new Item_line();
-                            $newItemLine->item_id = $item_line[$i]['item_id'];
-                            $newItemLine->main_item_id = $id;
-                            $newItemLine->qty = $item_line[$i]['qty'];
-                            $newItemLine->price = $item_line[$i]['price'];
-                            $newItemLine->total = $item_line[$i]['total'];
-                            $newItemLine->type = 'normal';
-                            $newItemLine->save();
-                            break;
-
-                        case 'update':
-
-                            $Item_line = Item_line::find($item_line[$i]['item_line_id']);
-
-                            $Item_line->qty = $item_line[$i]['qty'];
-                            $Item_line->price = $item_line[$i]['price'];
-                            $Item_line->total = $item_line[$i]['total'];
-                            $Item_line->save();
-                            break;
-
-                        case 'delete':
-                            $Item_line = Item_line::find($item_line[$i]['item_line_id']);
-
-                            $Item_line->delete();
-                            break;
-
-                        default:
-                            # code...
-                            break;
-                    }
-                }
-            }
-
-            DB::commit();
-
-            return $this->returnUpdate('Successful operation');
-        } catch (\Throwable $e) {
-
-            DB::rollback();
-
-            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
-        }
-    }
-
-
-
     public function getItem(Request $request)
     {
 
@@ -191,28 +49,68 @@ class ItemController extends Controller
             return $this->returnErrorData('[item_type_id] Data Not Found', 404);
         }
 
-        $item = Item::with('item_type')
-            ->with('user')
+        $item = Item::with('user')
+            ->with('item_type')
+            ->with('vendor')
+            ->with('user_create')
             ->where('item_type_id', $item_type_id);
 
         if ($userId) {
             $item->where('user_id', $userId);
         }
-        $Item = $item->where('status', 1)
-            ->get()
-            ->toarray();
+        $d = $item->where('status', 1)
+            ->get();
 
-        if (!empty($Item)) {
+        if ($d->isNotEmpty()) {
 
-            for ($i = 0; $i < count($Item); $i++) {
-                $Item[$i]['No'] = $i + 1;
+            for ($i = 0; $i < count($d); $i++) {
+                $d[$i]->No  = $i + 1;
 
-                //qty item
-                $Item[$i]['qty'] = $this->getStockCount($Item[$i]['id'], []);
+                //qty
+                $d[$i]->qty = $this->getStockCount($d[$i]->id, null, null);
+
+                //qty item_attributes
+                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                    $d[$i]->item_attributes[$j]->qty  = $this->getStockCount($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
+
+                    //qty item_attribute_seconds
+                    for ($k = 0; $k < count($d[$i]->item_attributes[$j]->item_attribute_seconds); $k++) {
+                        $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty  = $this->getStockCount($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
+                    }
+                }
+                //
+
+                //booking
+                $d[$i]->qty_booking = $this->getStockCountBooking($d[$i]->id, null, null);
+
+                //qty item_attributes
+                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                    $d[$i]->item_attributes[$j]->qty_booking  = $this->getStockCountBooking($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
+
+                    //qty item_attribute_seconds
+                    for ($k = 0; $k < count($d[$i]->item_attributes[$j]->item_attribute_seconds); $k++) {
+                        $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty_booking  = $this->getStockCountBooking($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
+                    }
+                }
+                //
+
+                //booking
+                $d[$i]->qty_balance = $this->getStockCountBalance($d[$i]->id, null, null);
+
+                //qty item_attributes
+                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                    $d[$i]->item_attributes[$j]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
+
+                    //qty item_attribute_seconds
+                    for ($k = 0; $k < count($d[$i]->item_attributes[$j]->item_attribute_seconds); $k++) {
+                        $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
+                    }
+                }
+                //
             }
         }
 
-        return $this->returnSuccess('Successful', $Item);
+        return $this->returnSuccess('Successful', $d);
     }
 
 
@@ -242,33 +140,35 @@ class ItemController extends Controller
 
         $col = array(
             'id',
+            'user_id',
+            'item_type_id',
+            'item_id',
             'name',
+            'barcode',
+            'brand',
+            'image',
+            'unit_cost',
+            'unit_price',
+            'description',
+            'set_type',
+            'vendor_id',
+            'weight',
+            'hight',
             'status',
             'create_by',
             'created_at',
-            'item_type_id',
-            'item_id',
-            'image',
-            'unit_price',
-            'unit_cost',
-            'vendor_id',
-            'barcode',
-            'brand',
-            'weight',
-            'set_type',
-            'description',
             'update_by',
             'updated_at'
-
         );
 
         $d = Item::select($col)
-
-            ->with('user_create')
+            ->with('user')
             ->with('item_type')
-            ->with('main_itemLine.item')
-
-            //->where('item_type_id', $item_type_id)
+            ->with('vendor')
+            ->with('item_images')
+            ->with('item_attributes.item_attribute_seconds')
+            ->with('item_lines')
+            ->with('user_create')
             ->where('set_type', $set_type);
 
         if ($userId) {
@@ -305,10 +205,49 @@ class ItemController extends Controller
                 $No = $No + 1;
                 $d[$i]->No = $No;
 
-                //qty item
-                $d[$i]->balance = $this->getStockCount($d[$i]->id, []);
-                $d[$i]->booking = abs($this->getStockBookingCount($d[$i]->id, []));
-                $d[$i]->qty = $this->getStockCountqty($d[$i]->id, []);
+                //qty
+                $d[$i]->qty = $this->getStockCount($d[$i]->id, null, null);
+
+                //qty item_attributes
+                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                    $d[$i]->item_attributes[$j]->qty  = $this->getStockCount($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
+
+                    //qty item_attribute_seconds
+                    for ($k = 0; $k < count($d[$i]->item_attributes[$j]->item_attribute_seconds); $k++) {
+                        $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty  = $this->getStockCount($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
+                    }
+                }
+                //
+
+                //booking
+                $d[$i]->qty_booking = $this->getStockCountBooking($d[$i]->id, null, null);
+
+                //qty item_attributes
+                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                    $d[$i]->item_attributes[$j]->qty_booking  = $this->getStockCountBooking($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
+
+                    //qty item_attribute_seconds
+                    for ($k = 0; $k < count($d[$i]->item_attributes[$j]->item_attribute_seconds); $k++) {
+                        $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty_booking  = $this->getStockCountBooking($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
+                    }
+                }
+                //
+
+                //booking
+                $d[$i]->qty_balance = $this->getStockCountBalance($d[$i]->id, null, null);
+
+                //qty item_attributes
+                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                    $d[$i]->item_attributes[$j]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
+
+                    //qty item_attribute_seconds
+                    for ($k = 0; $k < count($d[$i]->item_attributes[$j]->item_attribute_seconds); $k++) {
+                        $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
+                    }
+                }
+                //
+
+
             }
         }
 
@@ -331,107 +270,15 @@ class ItemController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-
-        $loginBy = $request->login_by;
-
-        if (!isset($request->name)) {
-            return $this->returnErrorData('[name] Data Not Found', 404);
-        } else if (!isset($request->unit_price)) {
-            return $this->returnErrorData('[unit_price] Data Not Found', 404);
-        } else if (!isset($loginBy)) {
-            return $this->returnErrorData('[login_by] Data Not Found', 404);
-        }
-
-        $itemId = $request->item_id;
-        //dd( $itemId);
-        $checkitemId = Item::where('item_id', $itemId)->first();
-
-        if ($checkitemId) {
-            return $this->returnErrorData('There is already this item id in the system', 404);
-        } else {
-
-            DB::beginTransaction();
-
-            try {
-
-                $Item = new Item();
-
-                $Item->user_id = $loginBy->id; // user_id
-
-                $itemId = $request->item_id;
-                $Item->item_id = $this->getLastNumber(5);
-                $itemId;
-                $Item->name = $request->name;
-                $Item->barcode = $this->getLastNumber(5);
-
-                $this->setRunDoc(5, $Item->barcode, $Item->item_id);
-
-                //des
-                if ($request->image && $request->image != 'null' && $request->image != null) {
-                    $Item->image = $this->uploadImage($request->image, '/images/item/');
-                }
-
-
-
-
-
-
-
-                $Item->vendor_id = $request->vendor_id;
-
-                $Item->qty = $request->qty;
-
-                $Item->set_type = $request->set_type;
-                $Item->total_price = $request->total_price;
-
-
-                $Item->brand = $request->brand;
-                $Item->unit_cost = $request->unit_cost;
-                $Item->unit_price = $request->unit_price;
-
-                $Item->description = $request->description;
-                $Item->weight = $request->weight;
-
-                $Item->status = 1;
-
-                $Item->create_by = $loginBy->user_id;
-
-                $Item->item_type_id = $request->item_type_id;
-
-                $Item->save();
-                $Item->item_type;
-
-                //log
-                $userId = $loginBy->user_id;
-                $type = 'Add Item';
-                $description = 'User ' . $userId . ' has ' . $type . ' ' . $itemId;
-                $this->Log($userId, $description, $type);
-                //
-
-                DB::commit();
-
-                return $this->returnSuccess('Successful operation', []);
-            } catch (\Throwable $e) {
-
-                DB::rollback();
-
-                return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
-            }
-        }
-    }
 
     public function Putstore(Request $request)
     {
 
-
         $item_line = $request->item_line;
+        $item_image = $request->item_image;
+        $item_attribute = $request->item_attribute;
         $loginBy = $request->login_by;
-        //$Item = $request->Item;
 
-        // dd($request->all());
-        //dd($item_line);
 
         if (!isset($request->name)) {
             return $this->returnErrorData('กรุณาเพิ่มชื่อสินค้า', 404);
@@ -441,12 +288,16 @@ class ItemController extends Controller
             return $this->returnErrorData('กรุณาใส่แบรนด์สินค้า', 404);
         } else if (!isset($request->image)) {
             return $this->returnErrorData('กรุณาเพิ่มรูปสินค้า', 404);
-        } else if (!isset($request->unit_cost) && $request->set_type == 'normal') {
+        } else if (!isset($request->unit_cost)) {
             return $this->returnErrorData('กรุณาใส่ต้นทุนสินค้า', 404);
-        } else if (!isset($request->unit_price) && $request->set_type == 'normal') {
+        } else if (!isset($request->unit_price)) {
             return $this->returnErrorData('กรุณาใส่ราคาสินค้า', 404);
+        } else if (!isset($request->set_type)) {
+            return $this->returnErrorData('กรุณาประเภทสินค้า', 404);
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
+        } else if (count($item_image) > 10) {
+            return $this->returnErrorData('คุณสามารถอัปโหลดภาพได้สูงสุด 10 ภาพ', 404);
         }
 
         $itemId = $request->item_id;
@@ -461,137 +312,218 @@ class ItemController extends Controller
 
             try {
 
+                //get item type
+                $Item_type  = Item_type::find($request->item_type_id);
+                if (!$Item_type) {
+                    return $this->returnErrorData('ไม่พบข้อมูลประเภทสินค้า', 404);
+                }
+
+
+                //get last item no
+                $lastNoItem = Item::where('user_id', $loginBy->id) //user_id
+                    ->where('item_type_id', $Item_type->id) //item type
+                    ->orderby('id', 'DESC')
+                    ->first();
+
+                if ($lastNoItem) {
+
+                    $lastNumber = substr($lastNoItem->item_id, -7);
+
+                    $newNumber = intval($lastNumber) + 1;
+                    $Number = sprintf('%0' . strval(7) . 'd', $newNumber);
+
+                    $runNumber =  $Item_type->code . '-' . $Number;
+                } else {
+                    $runNumber =  $Item_type->code . '-0000001';
+                }
+                //
+
                 $Item = new Item();
-                //dd( $Item);
+                $Item->item_id = $runNumber;
+                $Item->name = $request->name;
+                $Item->barcode =  $this->genBarcodeNumber();
+                $Item->brand = $request->brand;
+                $Item->image = $request->image;
+                $Item->unit_cost = $request->unit_cost;
+                $Item->unit_price = $request->unit_price;
+                $Item->description = $request->description;
+                $Item->set_type = $request->set_type;
+                $Item->weight = $request->weight;
+                $Item->hight = $request->hight;
 
-                if ($request->set_type  == 'normal') {
+                $Item->status = 1;
 
-                    $itemId = $request->item_id;
+                $Item->create_by = $loginBy->user_id;
 
-                    $Item->item_id = $this->getLastNumber(5);
-                    //$itemId;
-                    $Item->name = $request->name;
-                    $Item->barcode = $this->getLastNumber(5);
+                $Item->item_type_id = $request->item_type_id;
+                $Item->vendor_id = $request->vendor_id;
+                $Item->user_id = $loginBy->id;
+                $Item->save();
 
-                    $this->setRunDoc(5, $Item->barcode, $Item->item_id);
-
-                    //des
-
-                    $Item->image = $request->image;
-
-                    $Item->vendor_id = $request->vendor_id;
-
-                    $Item->set_type = $request->set_type;
-
-                    $Item->brand = $request->brand;
-                    $Item->unit_cost = $request->unit_cost;
-                    $Item->unit_price = $request->unit_price;
-
-                    $Item->description = $request->description;
-                    $Item->weight = $request->weight;
-                    $Item->status = 1;
-
-                    $Item->create_by = $loginBy->user_id;
-
-                    $Item->item_type_id = $request->item_type_id;
-
-                    $Item->save();
-
-                    //log
-                    $userId = $loginBy->user_id;
-                    $type = 'Add Item';
-                    $description = 'User ' . $userId . ' has ' . $type . ' ' . $itemId;
-                    $this->Log($userId, $description, $type);
-                    //
-
-
-                    DB::commit();
-                    return $this->returnSuccess('Successful operation', $Item);
-                } else if ($request->set_type  == 'set_products') {
-
-                    $itemId = $request->item_id;
-
-                    $Item->item_id = $this->getLastNumber(5);
-                    $Item->name = $request->name;
-                    $Item->barcode = $this->getLastNumber(5);
-                    $Item->image = $request->image;
-                    $this->setRunDoc(5, $Item->barcode, $Item->item_id);
-                    $Item->total_price = $request->total_price;
-                    $Item->brand = $request->brand;
-                    $Item->description = $request->description;
-
-
-                    $Item->set_type = $request->set_type;
-
-
-                    $Item->status = 1;
-
-                    $Item->create_by = $loginBy->user_id;
-
-                    $Item->item_type_id = $request->item_type_id;
-
-                    $Item->save();;
-
-
-
-
+                if ($request->set_type  == 'set_products') {
 
                     for ($i = 0; $i < count($item_line); $i++) {
 
-
-
                         $item_line[$i]['main_item_id'] = $Item->id;
-
                         $item_line[$i]['created_at'] = Carbon::now()->toDateTimeString();
                         $item_line[$i]['updated_at'] = Carbon::now()->toDateTimeString();
-
-                        $Item_trans = new Item_trans();
-                        //qty withdraw
-                        $qty = -$item_line[$i]['qty'];
-
-                        $Item_Line = Item::where('id', $item_line[$i]['item_id'])->first();
-
-                        $stockCount = $this->getStockCount($item_line[$i]['item_id'], []);
-
-
-                        if (abs($qty) > $stockCount) {
-                            return $this->returnErrorData('สินค้าบางอย่างไม่พอที่จะจัดเซ็ต', 404);
-                        }
-
-
-                        $Item_trans->description = "products Promotion";
-                        $Item_trans->item_id = $Item_Line->id;
-                        $Item_trans->qty = $qty;
-                        $Item_trans->main_item_id = $Item->id;
-
-
-                        $Item_trans->customer_id = $request->customer_id;
-                        $Item_trans->stock = $stockCount;
-                        $Item_trans->balance = $stockCount - abs($qty);
-                        $Item_trans->status = 1;
-                        $Item_trans->operation = 'booking';
-                        $Item_trans->date = $request->date_time;
-                        $Item_trans->type = 'Withdraw';
-                        $Item_trans->create_by = $loginBy->user_id;
-
-                        $Item_trans->save();
+                        $item_line[$i]['type']  = 'normal';
                     }
 
                     //add Item line
                     DB::table('item_lines')->insert($item_line);
-
-
-                    //log
-                    $userId = $loginBy->user_id;
-                    $type = 'Add Item_line';
-                    $description = 'User ' . $userId . ' has ' . $type . ' ' . $itemId;
-                    $this->Log($userId, $description, $type);
-                    //
-
-                    DB::commit();
-
-                    return $this->returnSuccess('Successful operation', [$item_line]);
                 }
+
+                //item image
+                if (!empty($item_image)) {
+
+                    for ($i = 0; $i < count($item_image); $i++) {
+
+                        $item_image[$i]['item_id'] = $Item->id;
+                        $item_image[$i]['created_at'] = Carbon::now()->toDateTimeString();
+                        $item_image[$i]['updated_at'] = Carbon::now()->toDateTimeString();
+                    }
+
+                    //add Item line
+                    DB::table('item_images')->insert($item_image);
+                }
+
+                //item attribute
+                if (!empty($item_attribute)) {
+
+                    //1 attribute
+                    $Item->attribute = 1;
+                    $Item->save();
+
+                    for ($i = 0; $i < count($item_attribute); $i++) {
+
+                        $Item_attribute =  new Item_attribute();
+                        $Item_attribute->item_id = $Item->id;
+                        $Item_attribute->image =  $item_attribute[$i]['image'];
+                        $Item_attribute->name =  $item_attribute[$i]['name'];
+                        $Item_attribute->unit_cost =  $item_attribute[$i]['unit_cost'];
+                        $Item_attribute->unit_price =  $item_attribute[$i]['unit_price'];
+                        $Item_attribute->barcode =  $this->genBarcodeNumber();
+                        $Item_attribute->save();
+
+
+                        if (!empty($item_attribute[$i]['item_attribute_second'])) {
+
+                            //2 attribute
+                            $Item->attribute = 2;
+                            $Item->save();
+
+
+                            for ($j = 0; $j < count($item_attribute[$i]['item_attribute_second']); $j++) {
+
+                                $Item_attribute_second =  new Item_attribute_second();
+                                $Item_attribute_second->item_id = $Item->id;
+                                $Item_attribute_second->item_attribute_id = $Item_attribute->id;
+                                $Item_attribute_second->image =  $item_attribute[$i]['item_attribute_second'][$j]['image'];
+                                $Item_attribute_second->name =  $item_attribute[$i]['item_attribute_second'][$j]['name'];
+                                $Item_attribute_second->unit_cost =  $item_attribute[$i]['item_attribute_second'][$j]['unit_cost'];
+                                $Item_attribute_second->unit_price =  $item_attribute[$i]['item_attribute_second'][$j]['unit_price'];
+                                $Item_attribute_second->barcode =  $this->genBarcodeNumber();
+                                $Item_attribute_second->save();
+
+
+                                //2 attribute
+                                $item_id = $Item->id;
+                                $item_attribute_id = $Item_attribute->id;
+                                $Item_attribute_second_id = $Item_attribute_second->id;
+                                $qty = $item_attribute[$i]['item_attribute_second'][$j]['qty'];
+
+                                //add item trans
+                                $Item_trans = new Item_trans();
+
+                                $stockCount = $this->getStockCount($item_id, $item_attribute_id, $Item_attribute_second_id);
+
+                                $Item_trans->description = null;
+                                $Item_trans->item_id = $item_id;
+                                $Item_trans->item_attribute_id = $item_attribute_id;
+                                $Item_trans->Item_attribute_second_id = $Item_attribute_second_id;
+
+                                $Item_trans->qty = $qty;
+                                $Item_trans->stock = $stockCount;
+                                $Item_trans->balance = $stockCount + abs($qty);
+                                $Item_trans->status = 1;
+
+                                $Item_trans->operation = 'finish';
+                                $Item_trans->date = date('Y-m-d H:i:s');
+                                $Item_trans->type = 'deposit';
+                                $Item_trans->create_by = $loginBy->user_id;
+
+                                $Item_trans->save();
+                            }
+                        } else {
+
+                            //1 attribute
+                            $item_id = $Item->id;
+                            $item_attribute_id = $Item_attribute->id;
+                            $Item_attribute_second_id = null;
+                            $qty = $item_attribute[$i]['qty'];
+
+                            //add item trans
+                            $Item_trans = new Item_trans();
+
+                            $stockCount = $this->getStockCount($item_id, $item_attribute_id, $Item_attribute_second_id);
+
+                            $Item_trans->description = null;
+                            $Item_trans->item_id = $item_id;
+                            $Item_trans->item_attribute_id = $item_attribute_id;
+                            $Item_trans->Item_attribute_second_id = $Item_attribute_second_id;
+
+                            $Item_trans->qty = $qty;
+                            $Item_trans->stock = $stockCount;
+                            $Item_trans->balance = $stockCount + abs($qty);
+                            $Item_trans->status = 1;
+
+                            $Item_trans->operation = 'finish';
+                            $Item_trans->date = date('Y-m-d H:i:s');
+                            $Item_trans->type = 'deposit';
+                            $Item_trans->create_by = $loginBy->user_id;
+
+                            $Item_trans->save();
+                        }
+                    }
+                } else {
+
+                    //no attribute
+                    $Item->attribute = 0;
+                    $Item->save();
+
+                    //no attribute
+                    $item_id = $Item->id;
+                    $item_attribute_id = null;
+                    $Item_attribute_second_id = null;
+                    $qty = $item_attribute[$i]['qty'];
+
+                    //add item trans
+                    $Item_trans = new Item_trans();
+
+                    $stockCount = $this->getStockCount($item_id, $item_attribute_id, $Item_attribute_second_id);
+
+                    $Item_trans->description = null;
+                    $Item_trans->item_id = $item_id;
+                    $Item_trans->item_attribute_id = $item_attribute_id;
+                    $Item_trans->Item_attribute_second_id = $Item_attribute_second_id;
+
+                    $Item_trans->qty = $qty;
+                    $Item_trans->stock = $stockCount;
+                    $Item_trans->balance = $stockCount + abs($qty);
+                    $Item_trans->status = 1;
+
+                    $Item_trans->operation = 'finish';
+                    $Item_trans->date = date('Y-m-d H:i:s');
+                    $Item_trans->type = 'deposit';
+                    $Item_trans->create_by = $loginBy->user_id;
+
+                    $Item_trans->save();
+                }
+
+                DB::commit();
+
+                return $this->returnSuccess('Successful operation', $Item);
             } catch (\Throwable $e) {
 
                 DB::rollback();
@@ -613,18 +545,58 @@ class ItemController extends Controller
             return $this->returnErrorData('[id] Data Not Found', 404);
         }
 
-        $Item = Item::with('item_type')
-            ->with('user')
+        $Item = Item::with('user')
+            ->with('item_type')
             ->with('vendor')
-
-            ->with('main_itemLine.item')
-
+            ->with('item_images')
+            ->with('item_attributes.item_attribute_seconds')
+            ->with('item_lines')
+            ->with('user_create')
             ->find($id);
 
         if (!empty($Item)) {
 
-            //qty item
-            $Item->qty = $this->getStockCount($Item->id, []);
+            //qty
+            $Item->qty = $this->getStockCount($Item->id, null, null);
+
+            //qty item_attributes
+            for ($i = 0; $i < count($Item->item_attributes); $i++) {
+                $Item->item_attributes[$i]->qty  = $this->getStockCount($Item->id, $Item->item_attributes[$i]->id, null);
+
+                //qty item_attribute_seconds
+                for ($j = 0; $j < count($Item->item_attributes[$i]->item_attribute_seconds); $j++) {
+                    $Item->item_attributes[$i]->item_attribute_seconds[$j]->qty  = $this->getStockCount($Item->id, $Item->item_attributes[$i]->id, $Item->item_attributes[$i]->item_attribute_seconds[$j]->id);
+                }
+            }
+            //
+
+            //booking
+            $Item->qty_booking = $this->getStockCountBooking($Item->id, null, null);
+
+            //booking item_attributes
+            for ($i = 0; $i < count($Item->item_attributes); $i++) {
+                $Item->item_attributes[$i]->qty_booking  = $this->getStockCountBooking($Item->id, $Item->item_attributes[$i]->id, null);
+
+                //booking item_attribute_seconds
+                for ($j = 0; $j < count($Item->item_attributes[$i]->item_attribute_seconds); $j++) {
+                    $Item->item_attributes[$i]->item_attribute_seconds[$j]->qty_booking  = $this->getStockCountBooking($Item->id, $Item->item_attributes[$i]->id, $Item->item_attributes[$i]->item_attribute_seconds[$j]->id);
+                }
+            }
+            //
+
+            //balance
+            $Item->qty_balance = $this->getStockCountBalance($Item->id, null, null);
+
+            //balance item_attributes
+            for ($i = 0; $i < count($Item->item_attributes); $i++) {
+                $Item->item_attributes[$i]->qty_balance  = $this->getStockCountBalance($Item->id, $Item->item_attributes[$i]->id, null);
+
+                //balance item_attribute_seconds
+                for ($j = 0; $j < count($Item->item_attributes[$i]->item_attribute_seconds); $j++) {
+                    $Item->item_attributes[$i]->item_attribute_seconds[$j]->qty_balance  = $this->getStockCountBalance($Item->id, $Item->item_attributes[$i]->id, $Item->item_attributes[$i]->item_attribute_seconds[$j]->id);
+                }
+            }
+            //
         }
 
         return $this->returnSuccess('Successful', $Item);
@@ -641,95 +613,169 @@ class ItemController extends Controller
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    // public function update(Request $request)
-    // {
 
-    //     $loginBy = $request->login_by;
-    //     $id = $request->id;
+    public function update(Request $request, $id)
+    {
 
-    //     if (!isset($loginBy)) {
-    //         return $this->returnErrorData('[login_by] Data Not Found', 404);
-    //     }
+        $item_line = $request->item_line;
+        $item_image = $request->item_image;
+        $item_attribute = $request->item_attribute;
 
-    //     $itemId = $request->item_id;
+        $loginBy = $request->login_by;
 
-    //     $checkitemId = Item::where('id', '!=', $id)
-    //         ->where('item_id', $itemId)
-    //         ->first();
-
-    //     if ($checkitemId) {
-    //         return $this->returnErrorData('There is already this item id in the system', 404);
-    //     } else {
-
-    //         DB::beginTransaction();
-
-    //         try {
-
-    //             $Item = Item::find($id);
-    //             $Item->item_id = $itemId;
+        if (!isset($id)) {
+            return $this->returnErrorData('[id] Data Not Found', 404);
+        } else  if (!isset($loginBy)) {
+            return $this->returnErrorData('[login_by] Data Not Found', 404);
+        } else if (count($item_image) > 10) {
+            return $this->returnErrorData('คุณสามารถอัปโหลดภาพได้สูงสุด 10 ภาพ', 404);
+        }
 
 
-    //             if ($request->image && $request->image != 'null' && $request->image != null) {
-    //                 $Item->image = $this->uploadImage($request->image, '/images/item/');
-    //             }
+        DB::beginTransaction();
 
-    //             $Item->location_id = $request->location_id;
-    //             $Item->name = $request->name;
-    //             $Item->vendor_id = $request->vendor_id;
-    //             $Item->item_id = $this->getLastNumber(5);
-    //             $Item->barcode = $this->getLastNumber(5);
+        try {
 
-    //             $this->setRunDoc(5, $Item->barcode, $Item->item_id);
+            $Item = Item::with('item_images')
+                ->with('item_attributes')
+                ->with('item_attribute_seconds')
+                ->with('item_lines')
+                ->find($id);
 
-    //             $Item->set_type = $request->set_type;
-    //             $Item->total_price = $request->total_price;
+            $Item->name = $request->name;
+            $Item->brand = $request->brand;
+
+            if (!isset($request->image)) {
+                $Item->image = $request->image;
+            }
+
+            $Item->unit_cost = $request->unit_cost;
+            $Item->unit_price = $request->unit_price;
+            $Item->description = $request->description;
+            $Item->set_type = $request->set_type;
+            $Item->weight = $request->weight;
+            $Item->hight = $request->hight;
+
+            $Item->vendor_id = $request->vendor_id;
+            $Item->item_type_id = $request->item_type_id;
+            $Item->updated_at = Carbon::now()->toDateTimeString();
+
+            $Item->save();
+
+            if ($Item->set_type  == 'set_products') {
+
+                if (!empty($item_lines)) {
+
+                    //del
+                    for ($i = 0; $i < count($Item->item_lines); $i++) {
+                        $Item->item_lines[$i]->delete();
+                    }
+
+                    //add
+                    for ($i = 0; $i < count($item_line); $i++) {
+
+                        $item_line[$i]['main_item_id'] = $Item->id;
+                        $item_line[$i]['created_at'] = Carbon::now()->toDateTimeString();
+                        $item_line[$i]['updated_at'] = Carbon::now()->toDateTimeString();
+                        $item_line[$i]['type']  = 'normal';
+                    }
+
+                    //add Item line
+                    DB::table('item_lines')->insert($item_line);
+                }
+            }
+
+            //item image
+            if (!empty($item_image)) {
+
+                //del
+                for ($i = 0; $i < count($Item->item_image); $i++) {
+                    $Item->item_image[$i]->delete();
+                }
+
+                //add
+                for ($i = 0; $i < count($item_image); $i++) {
+
+                    $item_image[$i]['item_id'] = $Item->id;
+                    $item_image[$i]['created_at'] = Carbon::now()->toDateTimeString();
+                    $item_image[$i]['updated_at'] = Carbon::now()->toDateTimeString();
+                }
+                //add Item line
+                DB::table('item_images')->insert($item_image);
+            }
+            //
+
+            //item attribute
+            if (!empty($item_attribute)) {
+
+                //del item_attributes
+                for ($i = 0; $i < count($Item->item_attributes); $i++) {
+                    $Item->item_attributes[$i]->delete();
+                }
+                //
+
+                //del item_attribute_seconds
+                for ($i = 0; $i < count($Item->item_attribute_seconds); $i++) {
+                    $Item->item_attribute_seconds[$i]->delete();
+                }
+                //
+
+                //add
+
+                //1 attribute
+                $Item->attribute = 1;
+                $Item->save();
+
+                for ($i = 0; $i < count($item_attribute); $i++) {
+
+                    $Item_attribute =  new Item_attribute();
+                    $Item_attribute->item_id = $Item->id;
+                    $Item_attribute->image =  $item_attribute[$i]['image'];
+                    $Item_attribute->name =  $item_attribute[$i]['name'];
+                    $Item_attribute->unit_cost =  $item_attribute[$i]['unit_cost'];
+                    $Item_attribute->unit_price =  $item_attribute[$i]['unit_price'];
+                    $Item_attribute->barcode =  $this->genBarcodeNumber();
+                    $Item_attribute->save();
 
 
-    //             $Item->brand = $request->brand;
-    //             $Item->unit_cost = $request->unit_cost;
-    //             $Item->unit_price = $request->unit_price;
+                    if (!empty($item_attribute[$i]['item_attribute_second'])) {
 
-    //             $Item->description = $request->description;
-    //             $Item->weight = $request->weight;
+                        //2 attribute
+                        $Item->attribute = 2;
+                        $Item->save();
 
-    //             $Item->item_type_id = $request->item_type_id;
+                        for ($j = 0; $j < count($item_attribute[$i]['item_attribute_second']); $j++) {
 
-    //             $Item->status = $request->status;
+                            $Item_attribute_second =  new Item_attribute_second();
+                            $Item_attribute_second->item_id = $Item->id;
+                            $Item_attribute_second->item_attribute_id = $Item_attribute->id;
+                            $Item_attribute_second->image =  $item_attribute[$i]['image'];
+                            $Item_attribute_second->name =  $item_attribute[$i]['name'];
+                            $Item_attribute_second->unit_cost =  $item_attribute[$i]['unit_cost'];
+                            $Item_attribute_second->unit_price =  $item_attribute[$i]['unit_price'];
+                            $Item_attribute_second->barcode =  $this->genBarcodeNumber();
+                            $Item_attribute_second->save();
+                        }
+                    }
+                }
+            } else {
 
-    //             $Item->update_by = $loginBy->user_id;
-    //             $Item->updated_at = Carbon::now()->toDateTimeString();
+                //0 attribute
+                $Item->attribute = 0;
+                $Item->save();
+            }
 
-    //             $Item->item_type_id = $request->item_type_id;
 
-    //             $Item->save();
-    //             $Item->item_type;
+            DB::commit();
 
-    //             //log
-    //             $userId = $loginBy->user_id;
-    //             $type = 'Edit Item';
-    //             $description = 'User ' . $userId . ' has ' . $type . ' ' . $Item->name;
-    //             $this->Log($userId, $description, $type);
-    //             //
+            return $this->returnUpdate('Successful operation');
+        } catch (\Throwable $e) {
 
-    //             DB::commit();
+            DB::rollback();
 
-    //             return $this->returnUpdate('Successful operation', $Item);
-    //         } catch (\Throwable $e) {
-
-    //             DB::rollback();
-
-    //             return $this->returnErrorData('Something went wrong Please try again' . $e, 404);
-    //         }
-    //     }
-    // }
-
+            return $this->returnErrorData('Something went wrong Please try again ' . $e, 404);
+        }
+    }
     /**
      * Remove the specified resource from storage.
      *
