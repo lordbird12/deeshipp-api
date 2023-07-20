@@ -153,6 +153,7 @@ class ItemController extends Controller
             'set_type',
             'vendor_id',
             'weight',
+            'width',
             'hight',
             'status',
             'create_by',
@@ -176,6 +177,7 @@ class ItemController extends Controller
             'set_type',
             'vendor_id',
             'weight',
+            'width',
             'hight',
             'status',
             'create_by',
@@ -378,6 +380,7 @@ class ItemController extends Controller
                 $Item->description = $request->description;
                 $Item->set_type = $request->set_type;
                 $Item->weight = $request->weight;
+                $Item->width = $request->width;
                 $Item->hight = $request->hight;
 
                 $Item->status = 1;
@@ -683,6 +686,7 @@ class ItemController extends Controller
             $Item->description = $request->description;
             $Item->set_type = $request->set_type;
             $Item->weight = $request->weight;
+            $Item->width = $request->width;
             $Item->hight = $request->hight;
 
             $Item->vendor_id = $request->vendor_id;
