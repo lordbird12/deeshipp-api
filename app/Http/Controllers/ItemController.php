@@ -161,6 +161,29 @@ class ItemController extends Controller
             'updated_at'
         );
 
+        $orderby = array(
+            'id',
+            'user_id',
+            'item_type_id',
+            'item_id',
+            'name',
+            'barcode',
+            'brand',
+            'image',
+            'unit_cost',
+            'unit_price',
+            'description',
+            'set_type',
+            'vendor_id',
+            'weight',
+            'hight',
+            'status',
+            'create_by',
+            'created_at',
+            'update_by',
+            'updated_at'
+        );
+
         $d = Item::select($col)
             ->with('user')
             ->with('item_type')
@@ -180,16 +203,22 @@ class ItemController extends Controller
             $d->where('item_type_id', $item_type_id);
         }
 
-        $d->orderby($col[$order[0]['column']], $order[0]['dir']);
-
-
+        if ($orderby[$order[0]['column']]) {
+            $d->orderby($orderby[$order[0]['column']], $order[0]['dir']);
+        }
         if ($search['value'] != '' && $search['value'] != null) {
 
-            //search datatable
-            $d->where(function ($query) use ($search, $col) {
-                foreach ($col as &$c) {
-                    $query->orWhere($c, 'like', '%' . $search['value'] . '%');
-                }
+            $d->Where(function ($query) use ($search, $col) {
+
+                //search datatable
+                $query->where(function ($query) use ($search, $col) {
+                    foreach ($col as &$c) {
+                        $query->orWhere($c, 'like', '%' . $search['value'] . '%');
+                    }
+                });
+
+                //search with
+
             });
         }
 

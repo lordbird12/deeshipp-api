@@ -1586,7 +1586,7 @@ class SaleOrderController extends Controller
                 $Sale_order->save();
 
                 //stock Count
-                $stockCount = $this->getStockCount($Item->id, null,null);
+                $stockCount = $this->getStockCount($Item->id, null, null);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('สินค้าไม่พอ', 404);
@@ -1614,8 +1614,6 @@ class SaleOrderController extends Controller
                 $Item_trans->item_id = $Item->id;
                 $Item_trans->qty = -$qty;
 
-
-
                 $Item_trans->customer_id = $Customer->id;
 
                 $Item_trans->stock = $stockCount;
@@ -1633,10 +1631,9 @@ class SaleOrderController extends Controller
 
 
                 //log
-                $userId = "1";
                 $type = 'ขายสินค้า';
-                $description = 'User' . $userId . ' has ' . $type;
-                $this->LogSaleOrder($userId, $description, $type);
+                $description = 'Live facebook'  . ' has ' . $type;
+                $this->LogSaleOrder('Live', $description, $type);
 
                 DB::commit();
 
@@ -1701,7 +1698,7 @@ class SaleOrderController extends Controller
                 $Sale_order->save();
 
                 //stock Count
-                $stockCount = $this->getStockCount($Item->id, null,null);
+                $stockCount = $this->getStockCount($Item->id, null, null);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('สินค้าไม่พอ', 404);
@@ -1911,6 +1908,25 @@ class SaleOrderController extends Controller
                 $Sale_order->updated_at = Carbon::now()->toDateTimeString();
 
                 $Sale_order->save();
+
+
+                //update stock
+                $fbCommentId =  $Sale_order->fb_comment_id;
+
+                if ($fbCommentId) {
+
+                    $Item_trans_booking = Item_trans::WhereHas('sale_order', function ($query) use ($fbCommentId) {
+                        $query->where('fb_comment_id', $fbCommentId);
+                    })
+                        ->first();
+
+                    if ($Item_trans_booking) {
+
+                        //cancel trans booking
+                        $Item_trans_booking->operation = 'finish';
+                        $Item_trans_booking->save();
+                    }
+                }
             }
 
             DB::commit();
@@ -1972,6 +1988,8 @@ class SaleOrderController extends Controller
         $payment_type = $request->payment_type;
 
 
+        $item_attribute_id = $request->item_attribute_id;
+        $item_attribute_second_id = $request->item_attribute_second_id;
 
         // $Order = $request->order;
         // $loginBy = $request->login_by;
@@ -2139,6 +2157,59 @@ class SaleOrderController extends Controller
             //     //add
             //     DB::table('sale_order_line')->insert($Order);
             // }
+
+
+            //item trans
+
+            $fbCommentId =  $Sale_order->fb_comment_id;
+
+            if ($fbCommentId) {
+
+                $Item_trans_booking = Item_trans::WhereHas('sale_order', function ($query) use ($fbCommentId) {
+                    $query->where('fb_comment_id', $fbCommentId);
+                })
+                    ->first();
+
+                if ($Item_trans_booking) {
+
+                    //cancel trans booking
+                    $Item_trans_booking->status = 0;
+                    $Item_trans_booking->save();
+
+                    //add new trans
+                    $Item_trans = new Item_trans();
+
+                    //qty withdraw
+                    $Item_trans->sale_order_id = $Sale_order->id;
+                    $Item_trans->item_id = $Item_trans_booking->item_id;
+                    $Item_trans->item_attribute_id = $item_attribute_id;
+                    $Item_trans->item_attribute_second_id = $item_attribute_second_id;
+                    $Item_trans->qty = -$Item_trans_booking->qty;
+
+                    $Item_trans->customer_id = $Sale_order->customer_id;
+
+                    //stock Count
+                    $stockCount = $this->getStockCount($Item_trans->item_id, $Item_trans->item_attribute_id,  $Item_trans->item_attribute_second_id);
+
+                    if (abs($Item_trans_booking->qty) > $stockCount) {
+                        return $this->returnErrorData('สินค้าไม่พอ', 404);
+                    }
+
+                    $Item_trans->stock = $stockCount;
+                    $Item_trans->balance = $stockCount - abs($Item_trans_booking->qty);
+                    $Item_trans->status = 1;
+                    $Item_trans->operation = 'booking';
+                    $Item_trans->date = date('Y-m-d');
+                    $Item_trans->type = 'Withdraw';
+                    $Item_trans->create_by = "Live";
+
+                    $Item_trans->save();
+                    $Sale_order->item_trans = $Item_trans;
+                }
+            }
+
+
+
 
             DB::commit();
 
