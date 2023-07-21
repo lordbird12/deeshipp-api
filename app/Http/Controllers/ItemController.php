@@ -582,7 +582,7 @@ class ItemController extends Controller
             ->with('vendor')
             ->with('item_images')
             ->with('item_attributes.item_attribute_seconds')
-            ->with('item_lines')
+            ->with('item_lines.item.item_type')
             ->with('user_create')
             ->find($id);
 
