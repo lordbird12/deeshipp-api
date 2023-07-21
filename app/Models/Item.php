@@ -78,7 +78,7 @@ class Item extends Model
     //item_line
     public function item_lines()
     {
-        return $this->hasMany(Item_line::class);
+        return $this->hasMany(Item_line::class,'main_item_id','id');
     }
 
 
