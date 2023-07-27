@@ -248,7 +248,7 @@ class SaleOrderController extends Controller
                     $Sale_order->order_id = $this->getLastNumber(3);
 
                     //run number
-                    $this->setRunDoc(5, $Sale_order->order_id);
+                    $this->setRunDoc(3, $Sale_order->order_id);
                     $Sale_order->date_time = $request->date_time;
                     $Sale_order->customer_id = $request->customer_id;
                     $Sale_order->delivery_by_id = $request->delivery_by_id;
@@ -280,7 +280,7 @@ class SaleOrderController extends Controller
                     $Sale_order->order_id = $this->getLastNumber(3);
 
                     //run number
-                    $this->setRunDoc(5, $Sale_order->order_id);
+                    $this->setRunDoc(3, $Sale_order->order_id);
                     $Sale_order->date_time = $request->date_time;
                     $Sale_order->customer_id = $request->customer_id;
                     $Sale_order->delivery_by_id = $request->delivery_by_id;
@@ -424,7 +424,7 @@ class SaleOrderController extends Controller
                 $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
-                $this->setRunDoc(5, $Sale_order->order_id);
+                $this->setRunDoc(3, $Sale_order->order_id);
 
                 $Sale_order->date_time = $request->date_time;
                 $Sale_order->customer_id = $request->customer_id;
@@ -1002,7 +1002,7 @@ class SaleOrderController extends Controller
     //                 $Sale_order->order_id = $this->getLastNumber(3);
 
     //                 //run number
-    //                 $this->setRunDoc(5, $Sale_order->order_id);
+    //                 $this->setRunDoc(3, $Sale_order->order_id);
 
     //                 $Sale_order->date = $date;
     //                 $Sale_order->item_id = $ItemId;
@@ -1189,7 +1189,7 @@ class SaleOrderController extends Controller
         //         $Sale_order->order_id = $this->getLastNumber(3);
 
         //         //run number
-        //         $this->setRunDoc(5, $Sale_order->order_id);
+        //         $this->setRunDoc(3, $Sale_order->order_id);
         //         $Sale_order->date_time = date('Y-m-d');
         //         $Sale_order->customer_id = $Customer->customer_id;
         //         $Sale_order->delivery_by_id = 1;
@@ -1314,7 +1314,7 @@ class SaleOrderController extends Controller
         //         $Sale_order->order_id = $this->getLastNumber(3);
 
         //         // //run number
-        //         $this->setRunDoc(5, $Sale_order->order_id);
+        //         $this->setRunDoc(3, $Sale_order->order_id);
 
         //         $Sale_order->date_time = date('Y-m-d');
         //         $Sale_order->customer_id = $Customer->id;
@@ -1515,6 +1515,7 @@ class SaleOrderController extends Controller
         $qty = 1;
 
 
+
         if (!isset($request->email)) {
             return $this->returnErrorData('กรุณาใส่ Email', 404);
         } else if (!isset($request->channal)) {
@@ -1545,9 +1546,11 @@ class SaleOrderController extends Controller
             ->where('page_id', $request->page_id)
             ->first();
 
+
         DB::beginTransaction();
 
         try {
+
 
             if ($checkName) {
 
@@ -1558,7 +1561,9 @@ class SaleOrderController extends Controller
                 $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
-                $this->setRunDoc(5, $Sale_order->order_id);
+                $this->setRunDoc(3, $Sale_order->order_id);
+
+
                 $Sale_order->date_time = date('Y-m-d');
                 $Sale_order->customer_id = $Customer->customer_id;
                 $Sale_order->delivery_by_id = 1;
@@ -1585,12 +1590,15 @@ class SaleOrderController extends Controller
                 $Sale_order->create_by = "Live";
                 $Sale_order->save();
 
+
+
                 //stock Count
                 $stockCount = $this->getStockCount($Item->id, null, null);
 
                 if (abs($qty) > $stockCount) {
                     return $this->returnErrorData('สินค้าไม่พอ', 404);
                 }
+
 
                 $sale_order_line = new sale_order_line();
                 $sale_order_line->item_id = $Item->id;
@@ -1638,6 +1646,7 @@ class SaleOrderController extends Controller
                 DB::commit();
 
                 if ($page) {
+
                     //ส่งลิงค์ sale page ไปยัง user
                     $resp = $this->_facebookApi->SendMessageFromLiveToUser(
                         $Sale_order->page_id,
@@ -1670,7 +1679,7 @@ class SaleOrderController extends Controller
                 $Sale_order->order_id = $this->getLastNumber(3);
 
                 //run number
-                $this->setRunDoc(5, $Sale_order->order_id);
+                $this->setRunDoc(3, $Sale_order->order_id);
                 $Sale_order->date_time = date('Y-m-d');
                 $Sale_order->customer_id = $Customer->customer_id;
                 $Sale_order->delivery_by_id = 1;

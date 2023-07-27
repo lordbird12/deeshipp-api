@@ -12,15 +12,30 @@ use Maatwebsite\Excel\Facades\Excel;
 class ItemTypeController extends Controller
 {
 
-    public function getItemType()
+    public function getItemType(Request $request)
     {
-        $Item_type = Item_type::where('status', 1)->with('user_create')->get()->toarray();
+        //check user
+        $loginBy = $request->login_by;
+
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else {
+            $userId = $loginBy->id;
+        }
+        //
+
+        $item_type = Item_type::where('status', 1);
+
+        if ($userId) {
+            $item_type->where('user_id', $userId);
+        }
+
+        $Item_type = $item_type->with('user_create')->get()->toarray();
 
         if (!empty($Item_type)) {
 
             for ($i = 0; $i < count($Item_type); $i++) {
                 $Item_type[$i]['No'] = $i + 1;
-
             }
         }
 
@@ -37,11 +52,25 @@ class ItemTypeController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        //check user
+        $loginBy = $request->login_by;
+
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else {
+            $userId = $loginBy->id;
+        }
+        //
+
         $col = array('id', 'name', 'status', 'code', 'create_by', 'update_by', 'created_at', 'updated_at');
 
-        $d = Item_type::select($col)->with('user_create')
+        $d = Item_type::select($col)->with('user_create');
 
-            ->orderby($col[$order[0]['column']], $order[0]['dir']);
+        if ($userId) {
+            $d->where('user_id', $userId);
+        }
+
+        $d->orderby($col[$order[0]['column']], $order[0]['dir']);
         if ($search['value'] != '' && $search['value'] != null) {
 
             //search datatable
@@ -49,7 +78,6 @@ class ItemTypeController extends Controller
                 foreach ($col as &$c) {
                     $query->orWhere($c, 'like', '%' . $search['value'] . '%');
                 }
-
             });
         }
 
@@ -64,9 +92,7 @@ class ItemTypeController extends Controller
 
                 $No = $No + 1;
                 $d[$i]->No = $No;
-
             }
-
         }
 
         return $this->returnSuccess('Successful', $d);
@@ -97,7 +123,6 @@ class ItemTypeController extends Controller
             return $this->returnErrorData('กรุณาใส่ชื่อหมวดหมู่สินค้า', 404);
         } else if (!isset($request->code)) {
             return $this->returnErrorData('กรุณาใส่รหัสสินค้า', 404);
-
         } else if (!isset($loginBy)) {
             return $this->returnErrorData('[login_by] Data Not Found', 404);
         }
@@ -113,7 +138,6 @@ class ItemTypeController extends Controller
 
         if ($checkName) {
             return $this->returnErrorData('ชื่อหรือรห้สซำ้ที่มีอยู่แล้วกรุณาเลือกใหม่', 404);
-
         } else {
 
             DB::beginTransaction();
@@ -138,7 +162,6 @@ class ItemTypeController extends Controller
                 DB::commit();
 
                 return $this->returnSuccess('Successful operation', []);
-
             } catch (\Throwable $e) {
 
                 DB::rollback();
@@ -197,7 +220,6 @@ class ItemTypeController extends Controller
 
         if ($checkName) {
             return $this->returnErrorData('There is already this name in the system', 404);
-
         } else {
 
             DB::beginTransaction();
@@ -223,7 +245,6 @@ class ItemTypeController extends Controller
                 DB::commit();
 
                 return $this->returnUpdate('Successful operation');
-
             } catch (\Throwable $e) {
 
                 DB::rollback();
@@ -265,7 +286,6 @@ class ItemTypeController extends Controller
             DB::commit();
 
             return $this->returnUpdate('Successful operation');
-
         } catch (\Throwable $e) {
 
             DB::rollback();

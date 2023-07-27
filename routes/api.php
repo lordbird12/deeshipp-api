@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankController;
+use App\Http\Controllers\BankOwnerController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\CheckoutController;
@@ -313,6 +314,12 @@ Route::group(['middleware' => 'checkjwt'], function () {
   Route::resource('user_bank', UserBankController::class);
   Route::post('/get_user_bank', [UserBankController::class, 'getUserBank']);
   Route::post('/user_bank_page', [UserBankController::class, 'UserBankPage']);
+
+
+  //bank onwer
+  Route::resource('bank_owner', BankOwnerController::class);
+  Route::post('/get_bank_owner', [BankOwnerController::class, 'getBankOwner']);
+  Route::post('/bank_owner_page', [BankOwnerController::class, 'BankOwnerPage']);
 
   //user page
   Route::resource('users_page', UserPageController::class);

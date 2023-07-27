@@ -70,7 +70,7 @@ class ItemController extends Controller
                 $d[$i]->qty = $this->getStockCount($d[$i]->id, null, null);
 
                 //qty item_attributes
-                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                for ($j = 0; $j < count($d[$i]->item_attributes); $j++) {
                     $d[$i]->item_attributes[$j]->qty  = $this->getStockCount($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
 
                     //qty item_attribute_seconds
@@ -84,7 +84,7 @@ class ItemController extends Controller
                 $d[$i]->qty_booking = $this->getStockCountBooking($d[$i]->id, null, null);
 
                 //qty item_attributes
-                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                for ($j = 0; $j < count($d[$i]->item_attributes); $j++) {
                     $d[$i]->item_attributes[$j]->qty_booking  = $this->getStockCountBooking($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
 
                     //qty item_attribute_seconds
@@ -98,7 +98,7 @@ class ItemController extends Controller
                 $d[$i]->qty_balance = $this->getStockCountBalance($d[$i]->id, null, null);
 
                 //qty item_attributes
-                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                for ($j = 0; $j < count($d[$i]->item_attributes); $j++) {
                     $d[$i]->item_attributes[$j]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
 
                     //qty item_attribute_seconds
@@ -106,7 +106,7 @@ class ItemController extends Controller
                         $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
                     }
                 }
-                //
+
             }
         }
 
@@ -240,7 +240,7 @@ class ItemController extends Controller
                 $d[$i]->qty = $this->getStockCount($d[$i]->id, null, null);
 
                 //qty item_attributes
-                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                for ($j = 0; $j < count($d[$i]->item_attributes); $j++) {
                     $d[$i]->item_attributes[$j]->qty  = $this->getStockCount($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
 
                     //qty item_attribute_seconds
@@ -254,7 +254,7 @@ class ItemController extends Controller
                 $d[$i]->qty_booking = $this->getStockCountBooking($d[$i]->id, null, null);
 
                 //qty item_attributes
-                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                for ($j = 0; $j < count($d[$i]->item_attributes); $j++) {
                     $d[$i]->item_attributes[$j]->qty_booking  = $this->getStockCountBooking($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
 
                     //qty item_attribute_seconds
@@ -268,7 +268,7 @@ class ItemController extends Controller
                 $d[$i]->qty_balance = $this->getStockCountBalance($d[$i]->id, null, null);
 
                 //qty item_attributes
-                for ($j = 0; $j < count($d[$j]->item_attributes); $j++) {
+                for ($j = 0; $j < count($d[$i]->item_attributes); $j++) {
                     $d[$i]->item_attributes[$j]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, null);
 
                     //qty item_attribute_seconds
@@ -528,7 +528,8 @@ class ItemController extends Controller
                     $item_id = $Item->id;
                     $item_attribute_id = null;
                     $Item_attribute_second_id = null;
-                    $qty = $item_attribute[$i]['qty'];
+                    $qty = $request->qty;
+
 
                     //add item trans
                     $Item_trans = new Item_trans();
