@@ -78,7 +78,7 @@ class ProductLiveController extends Controller
                 });
 
                 //search with
-                $query = $this->withPermission($query, $search);
+                // $query = $this->withPermission($query, $search);
             });
         }
 

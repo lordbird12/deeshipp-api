@@ -105,237 +105,242 @@ Route::get('/sale_page_show/{id}', [SalePageController::class, 'showDetail']);
 
 Route::group(['middleware' => 'checkjwt'], function () {
 
-  //Sale_page_content
+    //Sale_page_content
 
-  Route::resource('sale_pages_contents', SalePageContentController::class);
-
-
-
-  Route::get('/getcheckout', [CheckoutController::class, 'getcheckout']);
-
-  //salePage_Order
-  Route::resource('sale_pages_order', SalePageOrderController::class);
-  Route::post('/sale_pages_order', [SalePageOrderController::class, 'SalePageOrder']);
-  //salePage
-  Route::resource('sale_pages', SalePageController::class);
-  Route::get('/get_sale_pages', [SalePageController::class, 'getSalePages']);
-  Route::post('/sale_page_product', [SalePageController::class, 'SalePage']);
-  Route::put('/update_sale_page/{id}', [SalePageController::class, 'UpdateSalePage']);
-
-  //salary
-  Route::resource('salary', EmployeeSalaryController::class);
-  Route::get('/get_salary', [EmployeeSalaryController::class, 'getsalary']);
-  Route::post('/salary_page', [EmployeeSalaryController::class, 'salaryPage']);
-
-
-  //Bank
-  Route::resource('bank', BankController::class);
-  Route::get('/get_bank', [BankController::class, 'getBank']);
-  Route::post('/bankPage_page', [BankController::class, 'BankPage']);
-  Route::post('/reset_bank', [BankController::class, 'Bankupdate']);
-
-
-  //item_line
-  Route::post('/report_item_line', [ItemLineController::class, 'item_line']);
-  Route::get('/get_line', [ItemLineController::class, 'getItem_line']);
-  Route::resource('item_line', ItemLineController::class);
-  Route::post('/updateItemLine', [ItemLineController::class, 'ItemLineupdate']);
-
-
-  //delivered by
-  Route::resource('delivered_by', Delivered_byController::class);
-  Route::get('/get_delivered_by', [Delivered_byController::class, 'getDeliveredBy']);
-  Route::post('/update', [Delivered_byController::class, 'updateDeliver']);
-  Route::post('/deliverry_page', [Delivered_byController::class, 'deliveryPage']);
-
-  //Sale order
-  Route::get('/get_sale_order', [SaleOrderController::class, 'getSaleOrder']);
-  Route::get('/get_sale_order_approve', [SaleOrderController::class, 'getSaleOrderApprove']);
-  Route::resource('sale_order', SaleOrderController::class);
-  Route::post('/sale_order_page', [SaleOrderController::class, 'SaleOrderPage']);
-  Route::put('/approve_sale_order/{id}', [SaleOrderController::class, 'approveSaleOrder']);
-  Route::put('/SaleOrder_status/{id}', [SaleOrderController::class, 'SaleOrderStatus']);
-  Route::post('/SaleOrderTrack', [SaleOrderController::class, 'SaleOrderTrack']);
-  Route::post('/import_sale_order', [SaleOrderController::class, 'ImportSaleOrder']);
-  Route::post('/get_sale_order_open_job', [SaleOrderController::class, 'getSaleOrderOpenJob']);
-  Route::post('/get_sale_order_line_by_item', [SaleOrderController::class, 'getSaleOrderLineByItem']);
-
-  Route::post('/get_sale_order_approve_page', [SaleOrderController::class, 'getSaleOrderApprovePage']);
-
-
-  Route::post('/confirm_multi_order', [SaleOrderController::class, 'confirmMultiOrder']);
-  Route::post('/select_del_multi_order', [SaleOrderController::class, 'selectDelMultiOrder']);
-  Route::post('/confirm_order_by_code', [SaleOrderController::class, 'confirmOrderByCode']);
+    Route::resource('sale_pages_contents', SalePageContentController::class);
 
 
 
-  //Product
-  Route::resource('Product', ProductController::class);
-  Route::get('/get_product', [ProductController::class, 'getProduct']);
-  //select
-  Route::post('/register', [UserController::class, 'registerUser']);
-  //permission
-  Route::get('/get_permission', [PermissionController::class, 'getPermission']);
-  //
+    Route::get('/getcheckout', [CheckoutController::class, 'getcheckout']);
 
-  //vendor
-  Route::get('/get_vendor', [VendorController::class, 'getVendor']);
-  Route::resource('vendor', VendorController::class);
-  Route::post('/vendor_page', [VendorController::class, 'VendorPage']);
-  Route::post('/import_vendor', [VendorController::class, 'ImportVendor']);
+    //salePage_Order
+    Route::resource('sale_pages_order', SalePageOrderController::class);
+    Route::post('/sale_pages_order', [SalePageOrderController::class, 'SalePageOrder']);
+    //salePage
+    Route::resource('sale_pages', SalePageController::class);
+    Route::get('/get_sale_pages', [SalePageController::class, 'getSalePages']);
+    Route::post('/sale_page_product', [SalePageController::class, 'SalePage']);
+    Route::put('/update_sale_page/{id}', [SalePageController::class, 'UpdateSalePage']);
 
-  //customer
-  Route::get('/get_customer', [CustomerController::class, 'getCustomer']);
-  Route::resource('customer', CustomerController::class);
-  Route::post('/customer_page', [CustomerController::class, 'CustomerPage']);
-  Route::post('/customer_telesale_page', [CustomerController::class, 'CustomerTelesalePage']);
-  Route::post('/import_customer', [CustomerController::class, 'ImportCustomer']);
-  Route::post('/update_call', [CustomerController::class, 'updateCall']);
-  //Item Trans
-  Route::resource('item_trans', ItemTransController::class);
-  Route::post('/item_trans_page', [ItemTransController::class, 'ItemTransPage']);
-  Route::post('/item_stock_page', [ItemTransController::class, 'ItemStockPage']);
-  Route::post('/edit_item_trans', [ItemTransController::class, 'editItemTrans']);
-
-  //report
-  Route::post('/report_stock_item', [ReportController::class, 'ReportStockItem']);
-  Route::post('/report_tans_item', [ReportController::class, 'ReportTansItem']);
-  Route::post('/report_item_type_stock', [ReportController::class, 'ReportIemTypeStock']);
-  Route::post('/report_stockFG', [ReportController::class, 'ReportStockFG']);
-  Route::post('/report_item_lot', [ReportController::class, 'ReportItemLot']);
-  Route::post('/report_forcash', [ReportController::class, 'ReportForcash']);
-
-  Route::post('/report_sale_order', [ReportController::class, 'ReportSaleOrder']);
-  Route::post('/report_delevery_order', [ReportController::class, 'ReportDeleveryOrder']);
-
-  Route::post('/report_stock_slow', [ReportController::class, 'ReportStockSlow']);
-  Route::post('/report_stock_dead', [ReportController::class, 'ReportStockDead']);
-
-  Route::post('/report_job', [ReportController::class, 'ReportJob']);
-
-  Route::post('/report_machine', [ReportController::class, 'ReportMachine']);
-  Route::post('/report_mantenance', [ReportController::class, 'ReportMantenance']);
-  Route::post('/report_result', [ReportController::class, 'ReportResult']);
-
-  Route::post('/report_ng', [ReportController::class, 'ReportNG']);
-
-  Route::post('/report_maintenance_plan_component', [ReportController::class, 'ReportMaintenanceplanComponent']);
-
-  Route::post('/report_item_machine', [ReportController::class, 'ReportItemMachine']);
-
-  Route::post('/report_stock_on_due', [ReportController::class, 'ReportStockOnDue']);
-
-  Route::post('/report_item_ng', [ReportController::class, 'ReportItemNG']);
-  //
+    //salary
+    Route::resource('salary', EmployeeSalaryController::class);
+    Route::get('/get_salary', [EmployeeSalaryController::class, 'getsalary']);
+    Route::post('/salary_page', [EmployeeSalaryController::class, 'salaryPage']);
 
 
-  //Item_type
-  Route::get('/get_item_type', [ItemTypeController::class, 'getItemType']);
-  Route::resource('item_type', ItemTypeController::class);
-  Route::post('/item_type_page', [ItemTypeController::class, 'ItemTypePage']);
-  Route::post('/import_item_type', [ItemTypeController::class, 'ImportItemType']);
-
-  //Item
-  Route::post('/get_item', [ItemController::class, 'getItem']);
-  Route::post('/get_item_all', [ItemController::class, 'getItemAll']);
-  Route::put('/update_item/{id}', [ItemController::class, 'update']);
-  Route::resource('item', ItemController::class);
-  Route::post('/item_page', [ItemController::class, 'ItemPage']);
-  Route::post('/item_add', [ItemController::class, 'Putstore']);
-//   Route::post('/update_item', [ItemController::class, 'update']);
-//   Route::post('/import_item', [ItemController::class, 'ImportItem']);
-
-  Route::post('/get_stock_item_by_bom_id', [ItemController::class, 'getStockItemByBomId']);
-  Route::post('/get_stock_item_by_Location', [ItemController::class, 'getStockItemByLocation']);
-  // Permission
-  Route::resource('permission', PermissionController::class);
-  Route::post('/permission_page', [PermissionController::class, 'PermissionPage']);
-  Route::get('/get_permisson_user', [PermissionController::class, 'getPermissonUser']);
-  Route::post('/get_permisson_menu', [PermissionController::class, 'getPermissonMenu']);
-
-  //menu
-  Route::resource('menu', MenuController::class);
-
-  //user
-  Route::get('/get_user', [UserController::class, 'getUser']);
-  Route::resource('user', UserController::class);
-  Route::get('/user_profile', [UserController::class, 'getProfileUser']);
-  Route::post('/update_user', [UserController::class, 'updateUser']);
-  Route::post('/user_page', [UserController::class, 'UserPage']);
-  Route::put('/reset_password_user/{id}', [UserController::class, 'ResetPasswordUser']);
-  Route::post('/update_profile_user', [UserController::class, 'updateProfileUser']);
-  Route::delete('delete_user/{id}', [UserController::class, 'deleteUser']);
-  Route::put('/activate_user/{id}', [UserController::class, 'ActivateUser']);
-  Route::put('/update_password_user/{id}', [UserController::class, 'updatePasswordUser']);
-  Route::post('/import_user', [UserController::class, 'ImportUser']);
-  Route::get('/get_last_user_id', [UserController::class, 'getLastUserID']);
-  Route::post('/get_user_payroll_page', [UserController::class, 'getUserPayroll']);
-
-  Route::post('/update_delivery_user', [UserController::class, 'updateDeliveryUser']);
+    //Bank
+    Route::resource('bank', BankController::class);
+    Route::get('/get_bank', [BankController::class, 'getBank']);
+    Route::post('/bankPage_page', [BankController::class, 'BankPage']);
+    Route::post('/reset_bank', [BankController::class, 'Bankupdate']);
 
 
-  Route::post('/user_transection', [UserController::class, 'userTransection']);
+    //item_line
+    Route::post('/report_item_line', [ItemLineController::class, 'item_line']);
+    Route::get('/get_line', [ItemLineController::class, 'getItem_line']);
+    Route::resource('item_line', ItemLineController::class);
+    Route::post('/updateItemLine', [ItemLineController::class, 'ItemLineupdate']);
 
 
-  //Report stock
-  Route::post('/get_report_stock_by_type', [ReportStockController::class, 'getReportStockByType']);
+    //delivered by
+    Route::resource('delivered_by', Delivered_byController::class);
+    Route::get('/get_delivered_by', [Delivered_byController::class, 'getDeliveredBy']);
+    Route::post('/update', [Delivered_byController::class, 'updateDeliver']);
+    Route::post('/deliverry_page', [Delivered_byController::class, 'deliveryPage']);
 
-  Route::resource('report_stock', ReportStockController::class);
-  Route::post('/report_stock_page', [ReportStockController::class, 'ReportStockPage']);
+    //Sale order
+    Route::get('/get_sale_order', [SaleOrderController::class, 'getSaleOrder']);
+    Route::get('/get_sale_order_approve', [SaleOrderController::class, 'getSaleOrderApprove']);
+    Route::resource('sale_order', SaleOrderController::class);
+    Route::post('/sale_order_page', [SaleOrderController::class, 'SaleOrderPage']);
+    Route::put('/approve_sale_order/{id}', [SaleOrderController::class, 'approveSaleOrder']);
+    Route::put('/SaleOrder_status/{id}', [SaleOrderController::class, 'SaleOrderStatus']);
+    Route::post('/SaleOrderTrack', [SaleOrderController::class, 'SaleOrderTrack']);
+    Route::post('/import_sale_order', [SaleOrderController::class, 'ImportSaleOrder']);
+    Route::post('/get_sale_order_open_job', [SaleOrderController::class, 'getSaleOrderOpenJob']);
+    Route::post('/get_sale_order_line_by_item', [SaleOrderController::class, 'getSaleOrderLineByItem']);
 
-  Route::post('/report_deposit_item', [ReportStockController::class, 'DepositItem']);
-  Route::get('/report_stock1/{id}', [ReportStockController::class, 'showReport']);
-
-  Route::post('/report_withdraw_item', [ReportStockController::class, 'WithdrawItem']);
-  Route::post('/report_movement_item', [ReportStockController::class, 'MoveMentItem']);
-  Route::post('/report_adjust_item', [ReportStockController::class, 'AdjustItem']);
-
-  Route::put('/appove_report_stock/{id}', [ReportStockController::class, 'AppoveReportStock']);
+    Route::post('/get_sale_order_approve_page', [SaleOrderController::class, 'getSaleOrderApprovePage']);
 
 
-  //Doc
-  Route::resource('doc', DocController::class);
-  Route::post('/doc_page', [DocController::class, 'DocPage']);
+    Route::post('/confirm_multi_order', [SaleOrderController::class, 'confirmMultiOrder']);
+    Route::post('/select_del_multi_order', [SaleOrderController::class, 'selectDelMultiOrder']);
+    Route::post('/confirm_order_by_code', [SaleOrderController::class, 'confirmOrderByCode']);
 
 
 
-  //item return
-  Route::resource('item_return', ItemReturnController::class);
-  Route::post('/item_return_page', [ItemReturnController::class, 'getPage']);
-  Route::get('/get_item_return', [ItemReturnController::class, 'getList']);
+    //Product
+    Route::resource('Product', ProductController::class);
+    Route::get('/get_product', [ProductController::class, 'getProduct']);
+    //select
+    Route::post('/register', [UserController::class, 'registerUser']);
+    //permission
+    Route::get('/get_permission', [PermissionController::class, 'getPermission']);
+    //
+
+    //vendor
+    Route::get('/get_vendor', [VendorController::class, 'getVendor']);
+    Route::resource('vendor', VendorController::class);
+    Route::post('/vendor_page', [VendorController::class, 'VendorPage']);
+    Route::post('/import_vendor', [VendorController::class, 'ImportVendor']);
+
+    //customer
+    Route::get('/get_customer', [CustomerController::class, 'getCustomer']);
+    Route::resource('customer', CustomerController::class);
+    Route::post('/customer_page', [CustomerController::class, 'CustomerPage']);
+    Route::post('/customer_telesale_page', [CustomerController::class, 'CustomerTelesalePage']);
+    Route::post('/import_customer', [CustomerController::class, 'ImportCustomer']);
+    Route::post('/update_call', [CustomerController::class, 'updateCall']);
+    //Item Trans
+    Route::resource('item_trans', ItemTransController::class);
+    Route::post('/item_trans_page', [ItemTransController::class, 'ItemTransPage']);
+    Route::post('/item_stock_page', [ItemTransController::class, 'ItemStockPage']);
+    Route::post('/edit_item_trans', [ItemTransController::class, 'editItemTrans']);
+
+    //report
+    Route::post('/report_stock_item', [ReportController::class, 'ReportStockItem']);
+    Route::post('/report_tans_item', [ReportController::class, 'ReportTansItem']);
+    Route::post('/report_item_type_stock', [ReportController::class, 'ReportIemTypeStock']);
+    Route::post('/report_stockFG', [ReportController::class, 'ReportStockFG']);
+    Route::post('/report_item_lot', [ReportController::class, 'ReportItemLot']);
+    Route::post('/report_forcash', [ReportController::class, 'ReportForcash']);
+
+    Route::post('/report_sale_order', [ReportController::class, 'ReportSaleOrder']);
+    Route::post('/report_delevery_order', [ReportController::class, 'ReportDeleveryOrder']);
+
+    Route::post('/report_stock_slow', [ReportController::class, 'ReportStockSlow']);
+    Route::post('/report_stock_dead', [ReportController::class, 'ReportStockDead']);
+
+    Route::post('/report_job', [ReportController::class, 'ReportJob']);
+
+    Route::post('/report_machine', [ReportController::class, 'ReportMachine']);
+    Route::post('/report_mantenance', [ReportController::class, 'ReportMantenance']);
+    Route::post('/report_result', [ReportController::class, 'ReportResult']);
+
+    Route::post('/report_ng', [ReportController::class, 'ReportNG']);
+
+    Route::post('/report_maintenance_plan_component', [ReportController::class, 'ReportMaintenanceplanComponent']);
+
+    Route::post('/report_item_machine', [ReportController::class, 'ReportItemMachine']);
+
+    Route::post('/report_stock_on_due', [ReportController::class, 'ReportStockOnDue']);
+
+    Route::post('/report_item_ng', [ReportController::class, 'ReportItemNG']);
+    //
+
+
+    //Item_type
+    Route::get('/get_item_type', [ItemTypeController::class, 'getItemType']);
+    Route::resource('item_type', ItemTypeController::class);
+    Route::post('/item_type_page', [ItemTypeController::class, 'ItemTypePage']);
+    Route::post('/import_item_type', [ItemTypeController::class, 'ImportItemType']);
+
+    //Item
+    Route::post('/get_item', [ItemController::class, 'getItem']);
+    Route::post('/get_item_all', [ItemController::class, 'getItemAll']);
+    Route::put('/update_item/{id}', [ItemController::class, 'update']);
+    Route::resource('item', ItemController::class);
+    Route::post('/item_page', [ItemController::class, 'ItemPage']);
+    Route::post('/item_add', [ItemController::class, 'Putstore']);
+    //   Route::post('/update_item', [ItemController::class, 'update']);
+    //   Route::post('/import_item', [ItemController::class, 'ImportItem']);
+
+    Route::post('/get_stock_item_by_bom_id', [ItemController::class, 'getStockItemByBomId']);
+    Route::post('/get_stock_item_by_Location', [ItemController::class, 'getStockItemByLocation']);
+    // Permission
+    Route::resource('permission', PermissionController::class);
+    Route::post('/permission_page', [PermissionController::class, 'PermissionPage']);
+    Route::get('/get_permisson_user', [PermissionController::class, 'getPermissonUser']);
+    Route::post('/get_permisson_menu', [PermissionController::class, 'getPermissonMenu']);
+
+    //menu
+    Route::resource('menu', MenuController::class);
+
+    //user
+    Route::get('/get_user', [UserController::class, 'getUser']);
+    Route::resource('user', UserController::class);
+    Route::get('/user_profile', [UserController::class, 'getProfileUser']);
+    Route::post('/update_user', [UserController::class, 'updateUser']);
+    Route::post('/user_page', [UserController::class, 'UserPage']);
+    Route::put('/reset_password_user/{id}', [UserController::class, 'ResetPasswordUser']);
+    Route::post('/update_profile_user', [UserController::class, 'updateProfileUser']);
+    Route::delete('delete_user/{id}', [UserController::class, 'deleteUser']);
+    Route::put('/activate_user/{id}', [UserController::class, 'ActivateUser']);
+    Route::put('/update_password_user/{id}', [UserController::class, 'updatePasswordUser']);
+    Route::post('/import_user', [UserController::class, 'ImportUser']);
+    Route::get('/get_last_user_id', [UserController::class, 'getLastUserID']);
+    Route::post('/get_user_payroll_page', [UserController::class, 'getUserPayroll']);
+
+    Route::post('/update_delivery_user', [UserController::class, 'updateDeliveryUser']);
+
+
+    Route::post('/user_transection', [UserController::class, 'userTransection']);
+
+
+    //Report stock
+    Route::post('/get_report_stock_by_type', [ReportStockController::class, 'getReportStockByType']);
+
+    Route::resource('report_stock', ReportStockController::class);
+    Route::post('/report_stock_page', [ReportStockController::class, 'ReportStockPage']);
+
+    Route::post('/report_deposit_item', [ReportStockController::class, 'DepositItem']);
+    Route::get('/report_stock1/{id}', [ReportStockController::class, 'showReport']);
+
+    Route::post('/report_withdraw_item', [ReportStockController::class, 'WithdrawItem']);
+    Route::post('/report_movement_item', [ReportStockController::class, 'MoveMentItem']);
+    Route::post('/report_adjust_item', [ReportStockController::class, 'AdjustItem']);
+
+    Route::put('/appove_report_stock/{id}', [ReportStockController::class, 'AppoveReportStock']);
+
+
+    //Doc
+    Route::resource('doc', DocController::class);
+    Route::post('/doc_page', [DocController::class, 'DocPage']);
 
 
 
-  //log
-  Route::post('/log_page', [LogController::class, 'LogPage']);
-  Route::get('/get_log_type', [LogController::class, 'getLogType']);
-
-  //user bank
-  Route::resource('user_bank', UserBankController::class);
-  Route::post('/get_user_bank', [UserBankController::class, 'getUserBank']);
-  Route::post('/user_bank_page', [UserBankController::class, 'UserBankPage']);
+    //item return
+    Route::resource('item_return', ItemReturnController::class);
+    Route::post('/item_return_page', [ItemReturnController::class, 'getPage']);
+    Route::get('/get_item_return', [ItemReturnController::class, 'getList']);
 
 
-  //bank onwer
-  Route::resource('bank_owner', BankOwnerController::class);
-  Route::post('/get_bank_owner', [BankOwnerController::class, 'getBankOwner']);
-  Route::post('/bank_owner_page', [BankOwnerController::class, 'BankOwnerPage']);
 
-  //user page
-  Route::resource('users_page', UserPageController::class);
-  Route::post('/get_users_page', [UserPageController::class, 'getUserPage']);
-  Route::post('/users_page_page', [UserPageController::class, 'UserPagePage']);
+    //log
+    Route::post('/log_page', [LogController::class, 'LogPage']);
+    Route::get('/get_log_type', [LogController::class, 'getLogType']);
 
-  //user address send
-  Route::resource('user_address_sent', UserAddressSentController::class);
-  Route::post('/get_user_address_sent', [UserAddressSentController::class, 'getUserAddressSent']);
-  Route::post('/user_address_sent_page', [UserAddressSentController::class, 'UserAddressSentPage']);
+    //user bank
+    Route::resource('user_bank', UserBankController::class);
+    Route::post('/get_user_bank', [UserBankController::class, 'getUserBank']);
+    Route::post('/user_bank_page', [UserBankController::class, 'UserBankPage']);
 
-  //Transection
-  Route::post('/transection_page', [TransectionController::class, 'Page']);
 
-  //order
-  Route::post('/order_page', [OrderController::class, 'Page']);
+    //bank onwer
+    Route::resource('bank_owner', BankOwnerController::class);
+    Route::post('/get_bank_owner', [BankOwnerController::class, 'getBankOwner']);
+    Route::post('/bank_owner_page', [BankOwnerController::class, 'BankOwnerPage']);
+
+    //user page
+    Route::resource('users_page', UserPageController::class);
+    Route::post('/get_users_page', [UserPageController::class, 'getUserPage']);
+    Route::post('/users_page_page', [UserPageController::class, 'UserPagePage']);
+
+    //user address send
+    Route::resource('user_address_sent', UserAddressSentController::class);
+    Route::post('/get_user_address_sent', [UserAddressSentController::class, 'getUserAddressSent']);
+    Route::post('/user_address_sent_page', [UserAddressSentController::class, 'UserAddressSentPage']);
+
+    //Transection
+    Route::post('/transection_page', [TransectionController::class, 'Page']);
+
+    //order
+    Route::post('/order_page', [OrderController::class, 'Page']);
+
+    //product live
+    Route::resource('product_live', ProductLiveController::class);
+    Route::post('/product_live_page', [ProductLiveController::class, 'getPage']);
+    Route::get('/get_product_live', [ProductLiveController::class, 'getList']);
 });
 
 Route::post('/line_bot', [SaleOrderController::class, 'lineBot']);
@@ -344,10 +349,7 @@ Route::post('/order_from_live', [SaleOrderController::class, 'orderFromLive']);
 
 Route::put('/order_from_live/{id}', [SaleOrderController::class, 'updateOrderLive']);
 
-//product live
-Route::resource('product_live', ProductLiveController::class);
-Route::post('/product_live_page', [ProductLiveController::class, 'getPage']);
-Route::get('/get_product_live', [ProductLiveController::class, 'getList']);
+
 
 //export
 Route::get('/export_user', [UserController::class, 'ExportUser']);
@@ -362,4 +364,3 @@ Route::put('/payment_order_cm/{id}', [SaleOrderController::class, 'PaymentOrderC
 
 //calback payment
 Route::get('/callback_user_transection', [UserController::class, 'callbackUserTransection']);
-
