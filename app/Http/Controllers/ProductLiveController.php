@@ -34,6 +34,18 @@ class ProductLiveController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        //check user
+        $loginBy = $request->login_by;
+
+        if ($loginBy->permission->id == 1) {
+            $userId = null;
+        } else if ($loginBy->permission->id == 4) {
+            $userId = $loginBy->user_ref_id; //ผู้ดูแลร้านค้า
+        } else {
+            $userId = $loginBy->id;
+        }
+        //
+
         $Status = $request->status;
 
         $col = array('id', 'item_id', 'code', 'qty', 'create_by', 'update_by', 'created_at', 'updated_at');
@@ -41,6 +53,10 @@ class ProductLiveController extends Controller
         $orderby = array('', 'item_id', 'code', 'qty', 'create_by', 'status');
 
         $D = ProductLive::select($col);
+
+        if ($userId) {
+            $D->where('user_id', $userId);
+        }
 
         if (isset($Status)) {
             $D->where('status', $Status);
@@ -125,7 +141,7 @@ class ProductLiveController extends Controller
                 return $this->returnErrorData('ไม่มีรหัสสินค้า ' . $request->item_id . ' ในระบบ', 404);
             }
 
-            $checkItem = ProductLive::where("code",$request->code)->first();
+            $checkItem = ProductLive::where("code", $request->code)->first();
             if ($checkItem) {
                 return $this->returnErrorData('มีรหัสสินค้า ' . $request->code . ' ในระบบอยู่แล้ว', 404);
             }

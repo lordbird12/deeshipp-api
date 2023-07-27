@@ -38,6 +38,8 @@ class ItemController extends Controller
 
         if ($loginBy->permission->id == 1) {
             $userId = null;
+        } else if ($loginBy->permission->id == 4) {
+            $userId = $loginBy->user_ref_id; //ผู้ดูแลร้านค้า
         } else {
             $userId = $loginBy->id;
         }
@@ -106,7 +108,6 @@ class ItemController extends Controller
                         $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->qty_balance  = $this->getStockCountBalance($d[$i]->id, $d[$i]->item_attributes[$j]->id, $d[$i]->item_attributes[$j]->item_attribute_seconds[$k]->id);
                     }
                 }
-
             }
         }
 
@@ -129,6 +130,8 @@ class ItemController extends Controller
 
         if ($loginBy->permission->id == 1) {
             $userId = null;
+        } else if ($loginBy->permission->id == 4) {
+            $userId = $loginBy->user_ref_id; //ผู้ดูแลร้านค้า
         } else {
             $userId = $loginBy->id;
         }

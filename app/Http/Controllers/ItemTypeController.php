@@ -19,6 +19,8 @@ class ItemTypeController extends Controller
 
         if ($loginBy->permission->id == 1) {
             $userId = null;
+        } else if ($loginBy->permission->id == 4) {
+            $userId = $loginBy->user_ref_id; //ผู้ดูแลร้านค้า
         } else {
             $userId = $loginBy->id;
         }
@@ -57,6 +59,8 @@ class ItemTypeController extends Controller
 
         if ($loginBy->permission->id == 1) {
             $userId = null;
+        } else if ($loginBy->permission->id == 4) {
+            $userId = $loginBy->user_ref_id; //ผู้ดูแลร้านค้า
         } else {
             $userId = $loginBy->id;
         }

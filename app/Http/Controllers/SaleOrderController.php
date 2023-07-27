@@ -86,6 +86,8 @@ class SaleOrderController extends Controller
 
         if ($loginBy->permission->id == 1) {
             $saleId = null;
+        } else if ($loginBy->permission->id == 4) {
+            $userId = $loginBy->user_ref_id; //ผู้ดูแลร้านค้า
         } else {
             $saleId = $loginBy->id;
         }
