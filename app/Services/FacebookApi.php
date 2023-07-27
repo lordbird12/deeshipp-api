@@ -33,6 +33,7 @@ class FacebookApi
         if ($response->successful()) {
             return $response->object();
         } else {
+            // dd($response->body());
             throw new LogicException($response->body());
         }
     }

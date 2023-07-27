@@ -561,7 +561,7 @@ class SaleOrderController extends Controller
     {
         $Sale_order = Sale_order::with(['sale_order_lines' => function ($query) {
 
-            //$query->with('saleorder_id');
+            $query->with('item.item_type');
         }])
             ->with('saleorder_id.report_stock')
             ->with('sale')
@@ -1762,6 +1762,7 @@ class SaleOrderController extends Controller
                 DB::commit();
 
                 if ($page) {
+
                     //ส่งลิงค์ sale page ไปยัง user
                     $resp = $this->_facebookApi->SendMessageFromLiveToUser(
                         $Sale_order->page_id,
